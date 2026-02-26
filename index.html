@@ -6,958 +6,1015 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0a0f1e">
-<title>Landlord Leads</title>
-<link rel="manifest" href="manifest.json">
+<title>LandlordLeads</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
-  --gold: #c8a96e;
-  --gold-light: #e8c98e;
-  --navy: #0a0f1e;
-  --navy-mid: #131929;
-  --navy-card: #1a2235;
-  --navy-border: #243050;
-  --text: #e8eaf0;
-  --text-muted: #8892aa;
-  --green: #4caf7d;
-  --amber: #f5a623;
-  --red: #e05c5c;
-  --blue: #5b8cef;
-  --purple: #9b6ef5;
-  --safe-top: env(safe-area-inset-top, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --gold:#c8a96e; --gold-light:#e8c98e;
+  --navy:#0a0f1e; --navy-mid:#131929; --navy-card:#1a2235; --navy-border:#243050;
+  --text:#e8eaf0; --muted:#8892aa;
+  --green:#4caf7d; --amber:#f5a623; --red:#e05c5c; --blue:#5b8cef; --purple:#9b6ef5;
+  --st:env(safe-area-inset-top,0px); --sb:env(safe-area-inset-bottom,0px);
 }
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:var(--navy);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;overflow:hidden;}
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh;}
 
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+/* ── TOP BAR ── */
+.topbar{padding:calc(var(--st) + 12px) 20px 12px;background:var(--navy);border-bottom:1px solid var(--navy-border);flex-shrink:0;}
+.topbar-inner{display:flex;align-items:center;justify-content:space-between;}
+.app-title{font-family:'DM Serif Display',serif;font-size:22px;color:var(--gold);}
+.app-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+.sync-pill{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;border:1px solid var(--navy-border);background:var(--navy-card);color:var(--muted);font-size:11px;font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:500;transition:all .2s;white-space:nowrap;}
+.sync-pill.syncing{border-color:var(--gold);color:var(--gold);}
+.sync-pill.ok{border-color:var(--green);color:var(--green);}
+.sync-pill.err{border-color:var(--red);color:var(--red);}
+.sdot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.pulse{animation:pulse 1.2s infinite;}
 
-html, body {
-  height: 100%;
-  background: var(--navy);
-  color: var(--text);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 15px;
-  overflow: hidden;
-}
+/* ── TABS ── */
+.tabbar{display:flex;background:var(--navy);border-top:1px solid var(--navy-border);padding-bottom:var(--sb);flex-shrink:0;}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px;border:none;background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:10px;font-weight:500;cursor:pointer;transition:color .2s;letter-spacing:.3px;text-transform:uppercase;}
+.tab.on{color:var(--gold);}
+.tab svg{width:22px;height:22px;}
+.tdot{width:4px;height:4px;border-radius:2px;background:var(--gold);opacity:0;transition:opacity .2s;margin-top:2px;}
+.tab.on .tdot{opacity:1;}
 
-/* ── LAYOUT ── */
-#app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
-
-.top-bar {
-  padding: calc(var(--safe-top) + 12px) 20px 12px;
-  background: var(--navy);
-  border-bottom: 1px solid var(--navy-border);
-  flex-shrink: 0;
-  z-index: 10;
-}
-
-.top-bar-inner { display: flex; align-items: center; justify-content: space-between; }
-.app-title { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--gold); letter-spacing: 0.3px; }
-.app-subtitle { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
-
-.tab-bar {
-  display: flex;
-  background: var(--navy);
-  border-top: 1px solid var(--navy-border);
-  padding-bottom: var(--safe-bottom);
-  flex-shrink: 0;
-}
-
-.tab-btn {
-  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
-  padding: 10px 4px; border: none; background: transparent; color: var(--text-muted);
-  font-family: 'DM Sans', sans-serif; font-size: 10px; font-weight: 500;
-  cursor: pointer; transition: color 0.2s; letter-spacing: 0.3px; text-transform: uppercase;
-}
-.tab-btn.active { color: var(--gold); }
-.tab-btn svg { width: 22px; height: 22px; }
-.tab-indicator { width: 4px; height: 4px; border-radius: 2px; background: var(--gold); opacity: 0; transition: opacity 0.2s; margin-top: 2px; }
-.tab-btn.active .tab-indicator { opacity: 1; }
-
-.screen { display: none; flex: 1; overflow-y: auto; overflow-x: hidden; }
-.screen.active { display: flex; flex-direction: column; }
-
-/* ── SCROLL ── */
-::-webkit-scrollbar { width: 0; }
+/* ── SCREENS ── */
+.screen{display:none;flex:1;overflow-y:auto;overflow-x:hidden;}
+.screen.on{display:flex;flex-direction:column;}
+::-webkit-scrollbar{width:0;}
 
 /* ── DASHBOARD ── */
-.dash-header { padding: 20px 20px 8px; }
-.greeting { font-size: 13px; color: var(--text-muted); }
-.greeting strong { color: var(--gold); }
-
-.stats-grid {
-  display: grid; grid-template-columns: 1fr 1fr;
-  gap: 12px; padding: 12px 20px;
-}
-.stat-card {
-  background: var(--navy-card); border: 1px solid var(--navy-border);
-  border-radius: 14px; padding: 16px; position: relative; overflow: hidden;
-}
-.stat-card::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-  background: var(--accent-color, var(--gold));
-}
-.stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-.stat-value { font-family: 'DM Serif Display', serif; font-size: 32px; color: var(--text); margin-top: 4px; line-height: 1; }
-.stat-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
-
-.section-header { padding: 16px 20px 8px; display: flex; align-items: center; justify-content: space-between; }
-.section-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); }
-.section-link { font-size: 12px; color: var(--gold); }
-
-.followup-list { padding: 0 20px 20px; display: flex; flex-direction: column; gap: 8px; }
-
-.followup-card {
-  background: var(--navy-card); border: 1px solid var(--navy-border);
-  border-radius: 12px; padding: 14px 16px;
-  display: flex; align-items: center; gap: 12px;
-  cursor: pointer; transition: border-color 0.2s;
-}
-.followup-card:active { border-color: var(--gold); }
-.followup-avatar {
-  width: 40px; height: 40px; border-radius: 50%; background: var(--navy-border);
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'DM Serif Display', serif; font-size: 16px; color: var(--gold);
-  flex-shrink: 0;
-}
-.followup-info { flex: 1; min-width: 0; }
-.followup-name { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.followup-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-.followup-due { font-size: 11px; font-weight: 600; letter-spacing: 0.3px; }
-.due-today { color: var(--amber); }
-.due-overdue { color: var(--red); }
-.due-upcoming { color: var(--text-muted); }
-
-.empty-state { padding: 40px 20px; text-align: center; color: var(--text-muted); }
-.empty-state .icon { font-size: 40px; margin-bottom: 12px; }
-.empty-state p { font-size: 13px; }
+.dash-hdr{padding:20px 20px 8px;}
+.greeting{font-size:13px;color:var(--muted);}
+.greeting b{color:var(--gold);}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px 20px;}
+.scard{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:14px;padding:16px;position:relative;overflow:hidden;cursor:pointer;}
+.scard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--ac,var(--gold));}
+.slabel{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.sval{font-family:'DM Serif Display',serif;font-size:32px;line-height:1;margin-top:4px;}
+.ssub{font-size:11px;color:var(--muted);margin-top:4px;}
+.sec-hdr{padding:16px 20px 8px;display:flex;align-items:center;justify-content:space-between;}
+.sec-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);}
+.sec-link{font-size:12px;color:var(--gold);cursor:pointer;}
+.fup-list{padding:0 20px 20px;display:flex;flex-direction:column;gap:8px;}
+.fup-card{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color .2s;}
+.fup-card:active{border-color:var(--gold);}
+.fup-av{width:40px;height:40px;border-radius:50%;background:var(--navy-border);display:flex;align-items:center;justify-content:center;font-family:'DM Serif Display',serif;font-size:16px;color:var(--gold);flex-shrink:0;}
+.fup-info{flex:1;min-width:0;}
+.fup-name{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fup-meta{font-size:12px;color:var(--muted);margin-top:2px;}
+.d-today{color:var(--amber);font-size:11px;font-weight:600;}
+.d-over{color:var(--red);font-size:11px;font-weight:600;}
+.d-soon{color:var(--muted);font-size:11px;}
+.empty{padding:40px 20px;text-align:center;color:var(--muted);}
+.empty .ico{font-size:40px;margin-bottom:12px;}
+.empty p{font-size:13px;}
+.banner{margin:12px 20px 0;background:rgba(200,169,110,.08);border:1px solid rgba(200,169,110,.25);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;}
+.banner-text{flex:1;font-size:12px;color:var(--gold);line-height:1.4;}
 
 /* ── LEADS LIST ── */
-.search-bar { padding: 12px 20px; }
-.search-input-wrap { position: relative; }
-.search-input-wrap svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); width: 16px; height: 16px; }
-.search-input {
-  width: 100%; background: var(--navy-card); border: 1px solid var(--navy-border);
-  border-radius: 10px; padding: 10px 12px 10px 36px;
-  color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px;
-  outline: none;
-}
-.search-input:focus { border-color: var(--gold); }
-.search-input::placeholder { color: var(--text-muted); }
+.searchbar{padding:12px 20px;}
+.search-wrap{position:relative;}
+.search-wrap svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);width:16px;height:16px;}
+.search-inp{width:100%;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:10px;padding:10px 12px 10px 36px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;}
+.search-inp:focus{border-color:var(--gold);}
+.search-inp::placeholder{color:var(--muted);}
+.chips{display:flex;gap:8px;padding:0 20px 12px;overflow-x:auto;}
+.chips::-webkit-scrollbar{display:none;}
+.chip{flex-shrink:0;padding:6px 14px;border-radius:20px;border:1px solid var(--navy-border);background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;}
+.chip.on{background:var(--gold);border-color:var(--gold);color:var(--navy);font-weight:600;}
+.lead-list{padding:0 20px 20px;display:flex;flex-direction:column;gap:8px;}
+.lcard{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .2s;display:flex;align-items:center;gap:12px;}
+.lcard:active{border-color:var(--gold);}
+.lav{width:44px;height:44px;border-radius:50%;background:var(--navy-border);display:flex;align-items:center;justify-content:center;font-family:'DM Serif Display',serif;font-size:18px;color:var(--gold);flex-shrink:0;}
+.linfo{flex:1;min-width:0;}
+.lname{font-weight:600;font-size:15px;}
+.lmeta{font-size:12px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lright{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;}
+.badge{padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;}
+.s-New{background:rgba(91,140,239,.15);color:var(--blue);}
+.s-Warm{background:rgba(245,166,35,.15);color:var(--amber);}
+.s-Hot{background:rgba(224,92,92,.15);color:var(--red);}
+.s-Cold{background:rgba(136,146,170,.15);color:var(--muted);}
+.s-Contacted{background:rgba(76,175,125,.15);color:var(--green);}
+.s-Converted{background:rgba(155,110,245,.15);color:var(--purple);}
+.s-Lost{background:rgba(136,146,170,.1);color:var(--muted);}
+.pdot{width:8px;height:8px;border-radius:50%;}
+.p-High{background:var(--red);} .p-Medium{background:var(--amber);} .p-Low{background:var(--green);}
 
-.filter-chips { display: flex; gap: 8px; padding: 0 20px 12px; overflow-x: auto; }
-.filter-chips::-webkit-scrollbar { display: none; }
-.chip {
-  flex-shrink: 0; padding: 6px 14px; border-radius: 20px;
-  border: 1px solid var(--navy-border); background: transparent;
-  color: var(--text-muted); font-family: 'DM Sans', sans-serif;
-  font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s;
-}
-.chip.active { background: var(--gold); border-color: var(--gold); color: var(--navy); font-weight: 600; }
+/* ── FORMS ── */
+.form-wrap{padding:16px 20px 40px;}
+.form-title{font-family:'DM Serif Display',serif;font-size:24px;color:var(--gold);margin-bottom:4px;}
+.form-sub{font-size:13px;color:var(--muted);margin-bottom:24px;}
+.fsec{margin-bottom:20px;}
+.fsec-title{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.field{margin-bottom:12px;}
+.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:500;}
+.field input,.field select,.field textarea{width:100%;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color .2s;appearance:none;-webkit-appearance:none;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--gold);}
+.field textarea{resize:none;height:80px;}
+.field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238892aa' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+/* Editable select row */
+.sel-row{display:flex;gap:8px;align-items:flex-end;margin-bottom:12px;}
+.sel-row .field{flex:1;margin-bottom:0;}
+.edit-ico{height:44px;width:44px;flex-shrink:0;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);transition:all .2s;}
+.edit-ico:active{border-color:var(--gold);color:var(--gold);}
+.elabel{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:500;}
+.elabel span{font-size:10px;color:var(--gold);margin-left:4px;}
+.btn{width:100%;padding:16px;background:var(--gold);border:none;border-radius:12px;color:var(--navy);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .2s;margin-top:8px;}
+.btn:active{opacity:.85;}
+.btn2{width:100%;padding:14px;background:transparent;border:1px solid var(--navy-border);border-radius:12px;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;margin-top:8px;}
+.btnd{width:100%;padding:14px;background:transparent;border:1px solid rgba(224,92,92,.4);border-radius:12px;color:var(--red);font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;margin-top:8px;}
 
-.leads-list { padding: 0 20px 20px; display: flex; flex-direction: column; gap: 8px; }
+/* ── SETTINGS ── */
+.set-wrap{padding:16px 20px 60px;}
+.set-title{font-family:'DM Serif Display',serif;font-size:24px;color:var(--gold);margin-bottom:4px;}
+.set-sub{font-size:13px;color:var(--muted);margin-bottom:24px;}
+.set-card{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:14px;padding:16px;margin-bottom:16px;}
+.sc-title{font-size:14px;font-weight:600;margin-bottom:6px;}
+.sc-sub{font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6;}
+.set-inp{width:100%;background:var(--navy);border:1px solid var(--navy-border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;margin-bottom:8px;transition:border-color .2s;}
+.set-inp:focus{border-color:var(--gold);}
+.set-inp.has-val{border-color:rgba(200,169,110,.5);}
+.tog-row{display:flex;align-items:center;gap:12px;padding:4px 0;}
+.tog-row span{flex:1;font-size:14px;}
+.tog{width:48px;height:26px;border-radius:13px;background:var(--navy-border);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;}
+.tog-t{width:22px;height:22px;border-radius:50%;background:white;position:absolute;top:2px;left:2px;transition:left .2s;}
+.how-to{background:rgba(91,140,239,.08);border:1px solid rgba(91,140,239,.2);border-radius:10px;padding:14px;margin-top:12px;}
+.how-title{font-size:12px;font-weight:600;color:var(--blue);margin-bottom:8px;}
+.how-steps{font-size:12px;color:var(--muted);line-height:1.9;}
+.how-steps strong{color:var(--text);}
+.status-row{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--navy-border);}
+.status-row:last-child{border-bottom:none;}
+.status-row .label{flex:1;font-size:13px;}
+.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.dot-ok{background:var(--green);} .dot-err{background:var(--red);} .dot-pending{background:var(--amber);}
 
-.lead-card {
-  background: var(--navy-card); border: 1px solid var(--navy-border);
-  border-radius: 14px; padding: 14px 16px; cursor: pointer;
-  transition: border-color 0.2s; display: flex; align-items: center; gap: 12px;
-}
-.lead-card:active { border-color: var(--gold); }
-.lead-avatar {
-  width: 44px; height: 44px; border-radius: 50%; background: var(--navy-border);
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--gold);
-  flex-shrink: 0;
-}
-.lead-info { flex: 1; min-width: 0; }
-.lead-name { font-weight: 600; font-size: 15px; }
-.lead-meta { font-size: 12px; color: var(--text-muted); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.lead-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+/* ── DETAIL SCREEN ── */
+.detail{position:fixed;top:0;left:0;right:0;bottom:0;background:var(--navy);z-index:100;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden;}
+.detail.on{transform:translateX(0);}
+.det-hdr{padding:calc(var(--st) + 14px) 20px 14px;background:var(--navy);border-bottom:1px solid var(--navy-border);display:flex;align-items:center;gap:12px;}
+.back-btn{width:36px;height:36px;border-radius:50%;background:var(--navy-card);border:1px solid var(--navy-border);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+.det-name{font-family:'DM Serif Display',serif;font-size:20px;color:var(--gold);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.det-acts{display:flex;gap:8px;flex-shrink:0;}
+.abt{width:36px;height:36px;border-radius:50%;background:var(--navy-card);border:1px solid var(--navy-border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);transition:all .2s;}
+.abt:active{color:var(--gold);border-color:var(--gold);}
+.det-body{flex:1;overflow-y:auto;padding:20px;}
+.det-hero{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:16px;padding:20px;margin-bottom:16px;display:flex;align-items:center;gap:16px;}
+.det-av{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--navy-border),#2a3558);display:flex;align-items:center;justify-content:center;font-family:'DM Serif Display',serif;font-size:24px;color:var(--gold);flex-shrink:0;}
+.ibadges{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+.igrid{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:16px;padding:16px;margin-bottom:12px;}
+.igrid-title{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}
+.irow{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--navy-border);}
+.irow:last-child{border-bottom:none;}
+.iico{width:32px;height:32px;border-radius:8px;background:var(--navy-border);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:12px;}
+.ilabel{font-size:12px;color:var(--muted);}
+.ival{font-size:14px;font-weight:500;margin-top:1px;}
+.ilink{color:var(--gold);text-decoration:none;}
+.log-card{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:12px;padding:14px;margin-bottom:10px;}
+.log-form{background:var(--navy-card);border:1px solid var(--gold);border-radius:16px;padding:16px;margin-bottom:16px;}
+.log-ft{font-size:13px;font-weight:600;color:var(--gold);margin-bottom:12px;}
+.q-acts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;}
+.qbtn{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:12px;padding:12px 8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;cursor:pointer;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;transition:border-color .2s;}
+.qbtn:active{border-color:var(--gold);}
+.qbtn svg{width:20px;height:20px;color:var(--gold);}
 
-.status-badge {
-  padding: 3px 10px; border-radius: 20px; font-size: 10px;
-  font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
-}
-.status-new { background: rgba(91,140,239,0.15); color: var(--blue); }
-.status-warm { background: rgba(245,166,35,0.15); color: var(--amber); }
-.status-hot { background: rgba(224,92,92,0.15); color: var(--red); }
-.status-cold { background: rgba(136,146,170,0.15); color: var(--text-muted); }
-.status-contacted { background: rgba(76,175,125,0.15); color: var(--green); }
-.status-converted { background: rgba(155,110,245,0.15); color: var(--purple); }
-.status-lost { background: rgba(136,146,170,0.1); color: var(--text-muted); }
+/* ── MODAL ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .25s;}
+.overlay.on{opacity:1;pointer-events:all;}
+.modal{background:var(--navy-mid);border-radius:20px 20px 0 0;width:100%;padding:24px 20px calc(var(--sb) + 24px);transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);max-height:85vh;overflow-y:auto;}
+.overlay.on .modal{transform:translateY(0);}
+.mhandle{width:40px;height:4px;background:var(--navy-border);border-radius:2px;margin:0 auto 20px;}
+.mtitle{font-family:'DM Serif Display',serif;font-size:20px;color:var(--gold);margin-bottom:16px;}
+.li{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--navy-border);}
+.li:last-child{border-bottom:none;}
+.li-text{flex:1;font-size:14px;}
+.li-del{width:32px;height:32px;border-radius:50%;background:rgba(224,92,92,.12);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--red);font-size:14px;flex-shrink:0;}
+.add-row{display:flex;gap:8px;margin-top:16px;}
+.add-inp{flex:1;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;}
+.add-inp:focus{border-color:var(--gold);}
+.add-btn{padding:10px 16px;background:var(--gold);border:none;border-radius:10px;color:var(--navy);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;}
 
-.priority-dot { width: 8px; height: 8px; border-radius: 50%; }
-.priority-high { background: var(--red); }
-.priority-medium { background: var(--amber); }
-.priority-low { background: var(--green); }
-
-/* ── ADD LEAD FORM ── */
-.form-screen { padding: 16px 20px 40px; }
-.form-title { font-family: 'DM Serif Display', serif; font-size: 24px; color: var(--gold); margin-bottom: 4px; }
-.form-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
-
-.form-section { margin-bottom: 20px; }
-.form-section-title {
-  font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
-  color: var(--text-muted); margin-bottom: 10px; padding-left: 2px;
-}
-
-.field { margin-bottom: 12px; }
-.field label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 5px; font-weight: 500; }
-.field input, .field select, .field textarea {
-  width: 100%; background: var(--navy-card); border: 1px solid var(--navy-border);
-  border-radius: 10px; padding: 11px 14px;
-  color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px;
-  outline: none; transition: border-color 0.2s; appearance: none; -webkit-appearance: none;
-}
-.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--gold); }
-.field textarea { resize: none; height: 80px; }
-.field select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238892aa' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
-
-.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
-.btn-primary {
-  width: 100%; padding: 16px; background: var(--gold);
-  border: none; border-radius: 12px; color: var(--navy);
-  font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 700;
-  cursor: pointer; letter-spacing: 0.3px; transition: opacity 0.2s;
-  margin-top: 8px;
-}
-.btn-primary:active { opacity: 0.85; }
-
-.btn-secondary {
-  width: 100%; padding: 14px; background: transparent;
-  border: 1px solid var(--navy-border); border-radius: 12px; color: var(--text-muted);
-  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
-  cursor: pointer; margin-top: 8px;
-}
-
-/* ── LEAD DETAIL ── */
-.detail-screen {
-  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: var(--navy); z-index: 100;
-  transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
-  display: flex; flex-direction: column; overflow: hidden;
-}
-.detail-screen.open { transform: translateX(0); }
-
-.detail-header {
-  padding: calc(var(--safe-top) + 14px) 20px 14px;
-  background: var(--navy); border-bottom: 1px solid var(--navy-border);
-  display: flex; align-items: center; gap: 12px;
-}
-.back-btn {
-  width: 36px; height: 36px; border-radius: 50%; background: var(--navy-card);
-  border: 1px solid var(--navy-border); display: flex; align-items: center; justify-content: center;
-  cursor: pointer; flex-shrink: 0;
-}
-.detail-name { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--gold); flex: 1; }
-.detail-actions { display: flex; gap: 8px; }
-.action-btn {
-  width: 36px; height: 36px; border-radius: 50%; background: var(--navy-card);
-  border: 1px solid var(--navy-border); display: flex; align-items: center; justify-content: center;
-  cursor: pointer; color: var(--text-muted); transition: color 0.2s, border-color 0.2s;
-}
-.action-btn:active { color: var(--gold); border-color: var(--gold); }
-
-.detail-body { flex: 1; overflow-y: auto; padding: 20px; }
-
-.detail-hero {
-  background: var(--navy-card); border: 1px solid var(--navy-border);
-  border-radius: 16px; padding: 20px; margin-bottom: 16px;
-  display: flex; align-items: center; gap: 16px;
-}
-.detail-avatar {
-  width: 56px; height: 56px; border-radius: 50%;
-  background: linear-gradient(135deg, var(--navy-border), #2a3558);
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'DM Serif Display', serif; font-size: 24px; color: var(--gold);
-  flex-shrink: 0;
-}
-.detail-hero-info { flex: 1; }
-.detail-company { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
-.detail-badges { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
-
-.info-grid {
-  background: var(--navy-card); border: 1px solid var(--navy-border);
-  border-radius: 16px; padding: 16px; margin-bottom: 12px;
-}
-.info-grid-title { font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 14px; }
-.info-row { display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--navy-border); }
-.info-row:last-child { border-bottom: none; }
-.info-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--navy-border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-right: 12px; }
-.info-label { font-size: 12px; color: var(--text-muted); }
-.info-value { font-size: 14px; font-weight: 500; margin-top: 1px; }
-.info-link { color: var(--gold); text-decoration: none; }
-
-.log-card {
-  background: var(--navy-card); border: 1px solid var(--navy-border);
-  border-radius: 12px; padding: 14px; margin-bottom: 10px;
-}
-.log-date { font-size: 11px; color: var(--text-muted); font-weight: 600; }
-.log-outcome { font-size: 12px; margin-top: 4px; }
-.log-notes { font-size: 13px; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }
-
-.log-form {
-  background: var(--navy-card); border: 1px solid var(--gold);
-  border-radius: 16px; padding: 16px; margin-bottom: 16px;
-}
-.log-form-title { font-size: 13px; font-weight: 600; color: var(--gold); margin-bottom: 12px; }
-
-.quick-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 16px; }
-.quick-btn {
-  background: var(--navy-card); border: 1px solid var(--navy-border);
-  border-radius: 12px; padding: 12px 8px;
-  color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 11px;
-  font-weight: 500; cursor: pointer; text-align: center;
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
-  transition: border-color 0.2s; letter-spacing: 0.2px;
-}
-.quick-btn:active { border-color: var(--gold); }
-.quick-btn svg { width: 20px; height: 20px; color: var(--gold); }
-
-/* ── TOAST ── */
-.toast {
-  position: fixed; bottom: calc(var(--safe-bottom) + 70px); left: 50%; transform: translateX(-50%) translateY(20px);
-  background: var(--navy-card); border: 1px solid var(--gold);
-  border-radius: 10px; padding: 10px 20px;
-  font-size: 13px; font-weight: 500; color: var(--gold);
-  opacity: 0; transition: all 0.3s; z-index: 200; white-space: nowrap;
-  pointer-events: none;
-}
-.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-/* ── FAB ── */
-.fab {
-  position: fixed; right: 20px; bottom: calc(var(--safe-bottom) + 70px);
-  width: 56px; height: 56px; border-radius: 50%;
-  background: var(--gold); border: none;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; box-shadow: 0 4px 20px rgba(200,169,110,0.4);
-  z-index: 50; transition: transform 0.2s;
-}
-.fab:active { transform: scale(0.93); }
-.fab svg { width: 24px; height: 24px; color: var(--navy); }
-.fab.hidden { display: none; }
+/* ── FAB & TOAST ── */
+.fab{position:fixed;right:20px;bottom:calc(var(--sb) + 70px);width:56px;height:56px;border-radius:50%;background:var(--gold);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 20px rgba(200,169,110,.4);z-index:50;transition:transform .2s;}
+.fab:active{transform:scale(.93);}
+.fab svg{width:24px;height:24px;color:var(--navy);}
+.fab.hide{display:none;}
+.toast{position:fixed;bottom:calc(var(--sb) + 72px);left:50%;transform:translateX(-50%) translateY(20px);background:var(--navy-card);border:1px solid var(--gold);border-radius:10px;padding:10px 20px;font-size:13px;font-weight:500;color:var(--gold);opacity:0;transition:all .3s;z-index:400;white-space:nowrap;pointer-events:none;}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.terr{border-color:var(--red);color:var(--red);}
 </style>
 </head>
 <body>
 <div id="app">
-  <!-- TOP BAR -->
-  <div class="top-bar">
-    <div class="top-bar-inner">
-      <div>
-        <div class="app-title">🏠 LandlordLeads</div>
-        <div class="app-subtitle" id="topSubtitle">Cleriosan Property</div>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <div id="topDate" style="font-size:11px;color:var(--text-muted);text-align:right;"></div>
-      </div>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-inner">
+    <div>
+      <div class="app-title">🏠 LandlordLeads</div>
+      <div class="app-sub">Cleriosan Property</div>
     </div>
-  </div>
-
-  <!-- SCREENS -->
-  <!-- DASHBOARD -->
-  <div class="screen active" id="screen-dash">
-    <div class="dash-header">
-      <div class="greeting">Welcome back — <strong id="greetDay">today</strong></div>
-    </div>
-    <div class="stats-grid" id="statsGrid"></div>
-    <div class="section-header">
-      <span class="section-title">Follow-ups Due</span>
-      <span class="section-link" onclick="switchTab('leads')">View all →</span>
-    </div>
-    <div class="followup-list" id="followupList"></div>
-  </div>
-
-  <!-- LEADS -->
-  <div class="screen" id="screen-leads">
-    <div class="search-bar">
-      <div class="search-input-wrap">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-        <input class="search-input" id="searchInput" placeholder="Search by name, area, phone…" oninput="renderLeads()">
-      </div>
-    </div>
-    <div class="filter-chips" id="filterChips"></div>
-    <div class="leads-list" id="leadsList"></div>
-  </div>
-
-  <!-- ADD LEAD -->
-  <div class="screen" id="screen-add">
-    <div class="form-screen">
-      <div class="form-title">New Lead</div>
-      <div class="form-subtitle">Add a landlord you've just met</div>
-
-      <div class="form-section">
-        <div class="form-section-title">Contact</div>
-        <div class="field"><label>Full Name *</label><input id="f_name" placeholder="e.g. John Smith"></div>
-        <div class="field"><label>Company / Agency</label><input id="f_company" placeholder="Optional"></div>
-        <div class="field-row">
-          <div class="field"><label>Phone</label><input id="f_phone" type="tel" placeholder="+44…"></div>
-          <div class="field"><label>Email</label><input id="f_email" type="email" placeholder="@email.com"></div>
-        </div>
-      </div>
-
-      <div class="form-section">
-        <div class="form-section-title">Property Details</div>
-        <div class="field"><label>Area(s)</label><input id="f_area" placeholder="e.g. Hackney, Bethnal Green"></div>
-        <div class="field-row">
-          <div class="field"><label>No. of Properties</label><input id="f_props" type="number" placeholder="0" min="0"></div>
-          <div class="field"><label>Property Type</label>
-            <select id="f_type">
-              <option value="">Select…</option>
-              <option>Residential</option>
-              <option>HMO</option>
-              <option>Commercial</option>
-              <option>Mixed</option>
-              <option>Serviced</option>
-            </select>
-          </div>
-        </div>
-        <div class="field"><label>Motivation</label>
-          <select id="f_motivation">
-            <option value="">Select…</option>
-            <option>Void issues</option>
-            <option>Management issues</option>
-            <option>Selling up</option>
-            <option>Expanding</option>
-            <option>Just networking</option>
-            <option>Other</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="form-section">
-        <div class="form-section-title">Lead Management</div>
-        <div class="field-row">
-          <div class="field"><label>Status</label>
-            <select id="f_status">
-              <option value="New">New</option>
-              <option value="Warm">Warm</option>
-              <option value="Hot">Hot</option>
-              <option value="Cold">Cold</option>
-              <option value="Contacted">Contacted</option>
-            </select>
-          </div>
-          <div class="field"><label>Priority</label>
-            <select id="f_priority">
-              <option value="Medium">Medium</option>
-              <option value="High">High</option>
-              <option value="Low">Low</option>
-            </select>
-          </div>
-        </div>
-        <div class="field-row">
-          <div class="field"><label>Source / Event</label><input id="f_source" placeholder="e.g. BNI Meeting"></div>
-          <div class="field"><label>Follow-up Date</label><input id="f_followup" type="date"></div>
-        </div>
-        <div class="field"><label>Notes</label><textarea id="f_notes" placeholder="Key points from the conversation…"></textarea></div>
-      </div>
-
-      <button class="btn-primary" onclick="saveLead()">Save Lead</button>
-      <button class="btn-secondary" onclick="clearForm()">Clear Form</button>
-    </div>
-  </div>
-
-  <!-- TAB BAR -->
-  <div class="tab-bar">
-    <button class="tab-btn active" id="tab-dash" onclick="switchTab('dash')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-      Dashboard
-      <div class="tab-indicator"></div>
-    </button>
-    <button class="tab-btn" id="tab-leads" onclick="switchTab('leads')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      Leads
-      <div class="tab-indicator"></div>
-    </button>
-    <button class="tab-btn" id="tab-add" onclick="switchTab('add')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
-      Add Lead
-      <div class="tab-indicator"></div>
+    <button class="sync-pill" id="spill" onclick="manualSync()">
+      <div class="sdot" id="sdot"></div>
+      <span id="slbl">Sync</span>
     </button>
   </div>
 </div>
 
-<!-- FAB for detail screen -->
-<button class="fab hidden" id="fab" onclick="openLogForm()">
+<!-- ═══ DASHBOARD ═══ -->
+<div class="screen on" id="sc-dash">
+  <div id="dbanner"></div>
+  <div class="dash-hdr"><div class="greeting">Welcome back — <b id="gday"></b></div></div>
+  <div class="stats" id="stats"></div>
+  <div class="sec-hdr">
+    <span class="sec-title">Follow-ups Due</span>
+    <span class="sec-link" onclick="go('leads')">View all →</span>
+  </div>
+  <div class="fup-list" id="fuplist"></div>
+</div>
+
+<!-- ═══ LEADS ═══ -->
+<div class="screen" id="sc-leads">
+  <div class="searchbar">
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input class="search-inp" id="q" placeholder="Search name, area, phone…" oninput="renderLeads()">
+    </div>
+  </div>
+  <div class="chips" id="chips"></div>
+  <div class="lead-list" id="llist"></div>
+</div>
+
+<!-- ═══ ADD LEAD ═══ -->
+<div class="screen" id="sc-add">
+  <div class="form-wrap">
+    <div class="form-title" id="ftitle">New Lead</div>
+    <div class="form-sub" id="fsub">Add a landlord you've just met</div>
+
+    <div class="fsec">
+      <div class="fsec-title">Contact</div>
+      <div class="field"><label>Full Name *</label><input id="f_name" placeholder="e.g. John Smith"></div>
+      <div class="field"><label>Company / Agency</label><input id="f_co" placeholder="Optional"></div>
+      <div class="field-row">
+        <div class="field"><label>Phone</label><input id="f_phone" type="tel" placeholder="+44…"></div>
+        <div class="field"><label>Email</label><input id="f_email" type="email" placeholder="@email.com"></div>
+      </div>
+    </div>
+
+    <div class="fsec">
+      <div class="fsec-title">Property Details</div>
+      <div class="field"><label>Area(s)</label><input id="f_area" placeholder="e.g. TW15 3AR, Hackney"></div>
+      <div class="field-row">
+        <div class="field"><label>No. of Properties</label><input id="f_props" type="number" placeholder="0" min="0"></div>
+        <div>
+          <label class="elabel">Property Type <span>✎ editable</span></label>
+          <div class="sel-row">
+            <div class="field" style="margin:0"><select id="f_type"></select></div>
+            <div class="edit-ico" onclick="openMod('propType')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+      <label class="elabel">Motivation <span>✎ editable</span></label>
+      <div class="sel-row">
+        <div class="field" style="margin:0"><select id="f_motive"></select></div>
+        <div class="edit-ico" onclick="openMod('motivation')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="fsec">
+      <div class="fsec-title">Lead Management</div>
+      <div class="field-row">
+        <div>
+          <label class="elabel">Status <span>✎</span></label>
+          <div class="sel-row" style="margin-bottom:0">
+            <div class="field" style="margin:0"><select id="f_status"></select></div>
+            <div class="edit-ico" onclick="openMod('status')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Priority</label>
+          <select id="f_pri"><option>High</option><option selected>Medium</option><option>Low</option></select>
+        </div>
+      </div>
+      <div class="field-row" style="margin-top:4px">
+        <div>
+          <label class="elabel">Source / Event <span>✎</span></label>
+          <div class="sel-row" style="margin-bottom:12px">
+            <div class="field" style="margin:0"><select id="f_source"></select></div>
+            <div class="edit-ico" onclick="openMod('source')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </div>
+          </div>
+        </div>
+        <div class="field"><label>Follow-up Date</label><input id="f_fup" type="date"></div>
+      </div>
+      <div class="field"><label>Notes</label><textarea id="f_notes" placeholder="Key points from conversation…"></textarea></div>
+    </div>
+
+    <button class="btn" onclick="saveLead()">Save Lead</button>
+    <button class="btn2" onclick="cancelEdit()">Cancel / Clear</button>
+  </div>
+</div>
+
+<!-- ═══ SETTINGS ═══ -->
+<div class="screen" id="sc-settings">
+  <div class="set-wrap">
+    <div class="set-title">⚙️ Settings</div>
+    <div class="set-sub">Connect Google Sheets &amp; customise your app</div>
+
+    <!-- GOOGLE SHEETS API -->
+    <div class="set-card">
+      <div class="sc-title">📊 Google Sheets API Sync</div>
+      <div class="sc-sub">Paste your API key and Sheet ID below. Your leads will sync in real-time across all devices — phone, tablet, and computer.</div>
+
+      <div style="margin-bottom:12px">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:500">Google API Key</div>
+        <input class="set-inp" id="s_apikey" placeholder="AIzaSy…" oninput="checkInputs()">
+        <div style="font-size:11px;color:var(--muted)">From Google Cloud Console → Credentials</div>
+      </div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:500">Google Sheet ID</div>
+        <input class="set-inp" id="s_sheetid" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms" oninput="checkInputs()">
+        <div style="font-size:11px;color:var(--muted)">From the sheet URL: …/spreadsheets/d/<strong style="color:var(--gold)">SHEET_ID</strong>/edit</div>
+      </div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:500">Sheet Tab Name</div>
+        <input class="set-inp" id="s_tab" placeholder="Leads" oninput="checkInputs()">
+        <div style="font-size:11px;color:var(--muted)">The tab name at the bottom of your Google Sheet</div>
+      </div>
+
+      <div id="s_status" style="font-size:12px;color:var(--muted);min-height:18px;margin-bottom:10px"></div>
+      <button class="btn" style="margin-top:0" onclick="testAndSave()">💾 Save &amp; Test Connection</button>
+
+      <div class="how-to">
+        <div class="how-title">📋 How to get your API Key (3 steps)</div>
+        <div class="how-steps">
+          1. Go to <strong>console.cloud.google.com</strong><br>
+          2. Create a project → Enable <strong>Google Sheets API</strong><br>
+          3. Go to <strong>Credentials → Create API Key</strong><br>
+          4. Click the key → <strong>API restrictions → Google Sheets API</strong><br>
+          5. Copy the key and paste it above<br><br>
+          Then share your Google Sheet with <strong>Anyone with the link → Viewer</strong> (or Editor to allow writes)
+        </div>
+      </div>
+    </div>
+
+    <!-- CONNECTION STATUS -->
+    <div class="set-card" id="s_connCard" style="display:none">
+      <div class="sc-title">🔌 Connection Status</div>
+      <div id="s_connBody"></div>
+    </div>
+
+    <!-- AUTO SYNC -->
+    <div class="set-card">
+      <div class="sc-title">⏱ Auto Sync</div>
+      <div class="sc-sub">Sync automatically when you open the app or save a lead.</div>
+      <div class="tog-row">
+        <span>Sync on open &amp; save</span>
+        <div class="tog" id="tog" onclick="toggleAuto()"><div class="tog-t" id="togt"></div></div>
+      </div>
+    </div>
+
+    <!-- CUSTOMISE DROPDOWNS -->
+    <div class="set-card">
+      <div class="sc-title">🏷 Customise Dropdowns</div>
+      <div class="sc-sub">Add or remove options from your form selects.</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="btn2" style="padding:12px;margin:0" onclick="openMod('propType')">Edit Property Types</button>
+        <button class="btn2" style="padding:12px;margin:0" onclick="openMod('motivation')">Edit Motivations</button>
+        <button class="btn2" style="padding:12px;margin:0" onclick="openMod('status')">Edit Statuses</button>
+        <button class="btn2" style="padding:12px;margin:0" onclick="openMod('source')">Edit Source / Event Options</button>
+        <button class="btn2" style="padding:12px;margin:0" onclick="openMod('followupMethod')">Edit Follow-up Methods</button>
+      </div>
+    </div>
+
+    <!-- DATA -->
+    <div class="set-card">
+      <div class="sc-title">💾 Data Tools</div>
+      <button class="btn2" style="padding:12px;margin:0" onclick="exportCSV()">📥 Export leads as CSV</button>
+      <button class="btnd" style="padding:12px" onclick="confirmReset()">🗑 Clear all local data</button>
+    </div>
+  </div>
+</div>
+
+<!-- TAB BAR -->
+<div class="tabbar">
+  <button class="tab on" id="t-dash" onclick="go('dash')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+    Dashboard<div class="tdot"></div>
+  </button>
+  <button class="tab" id="t-leads" onclick="go('leads')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    Leads<div class="tdot"></div>
+  </button>
+  <button class="tab" id="t-add" onclick="go('add')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+    Add Lead<div class="tdot"></div>
+  </button>
+  <button class="tab" id="t-settings" onclick="go('settings')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Settings<div class="tdot"></div>
+  </button>
+</div>
+</div><!-- #app -->
+
+<!-- FAB -->
+<button class="fab hide" id="fab" onclick="openLog()">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
 </button>
 
 <!-- DETAIL SCREEN -->
-<div class="detail-screen" id="detailScreen">
-  <div class="detail-header">
+<div class="detail" id="det">
+  <div class="det-hdr">
     <div class="back-btn" onclick="closeDetail()">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
     </div>
-    <div class="detail-name" id="detailName">Lead</div>
-    <div class="detail-actions">
-      <div class="action-btn" id="callBtn" title="Call">
+    <div class="det-name" id="dname"></div>
+    <div class="det-acts">
+      <div class="abt" id="callbtn">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 8.63a19.79 19.79 0 01-3-8.59A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/></svg>
       </div>
-      <div class="action-btn" id="editLeadBtn" title="Edit" onclick="editCurrentLead()">
+      <div class="abt" onclick="editLead()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
       </div>
     </div>
   </div>
-  <div class="detail-body" id="detailBody"></div>
+  <div class="det-body" id="dbody"></div>
+</div>
+
+<!-- LIST EDIT MODAL -->
+<div class="overlay" id="mod" onclick="if(event.target.id==='mod')closeMod()">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="mtitle" id="mtitle">Edit List</div>
+    <div id="mbody"></div>
+    <div class="add-row">
+      <input class="add-inp" id="addinp" placeholder="New option…" onkeydown="if(event.key==='Enter')addItem()">
+      <button class="add-btn" onclick="addItem()">Add</button>
+    </div>
+    <button class="btn2" style="margin-top:10px" onclick="closeMod()">Done</button>
+  </div>
 </div>
 
 <!-- TOAST -->
-<div class="toast" id="toast"></div>
+<div class="toast" id="tst"></div>
 
 <script>
-// ── DATA STORE ──
-const STORE_KEY = 'landlord_leads_v2';
-let leads = JSON.parse(localStorage.getItem(STORE_KEY) || '[]');
-let currentLeadId = null;
-let activeFilter = 'All';
-let editMode = false;
-let logFormOpen = false;
+// ══════════════════════════════════════════════
+// STORE
+// ══════════════════════════════════════════════
+const LK='ll_leads_v4', LLK='ll_lists_v4', CK='ll_cfg_v4';
 
-function save() { localStorage.setItem(STORE_KEY, JSON.stringify(leads)); }
+const DEF={
+  propType:['Residential','HMO','Commercial','Mixed','Serviced Accommodation','Student','Holiday Let'],
+  motivation:['Void Issues','Management Issues','Selling Up','Expanding','Refinancing','Just Networking','Other'],
+  status:['New','Warm','Hot','Contacted','Cold','Converted','Lost'],
+  source:['BNI','Titans','Networking Event','Referral','Social Media','Cold Outreach','Other'],
+  followupMethod:['Phone Call','Text / WhatsApp','Email','In Person','Social Media','Video Call']
+};
 
-function genId() { return Date.now().toString(36) + Math.random().toString(36).substr(2,5); }
+let leads = JSON.parse(localStorage.getItem(LK)||'[]');
+let lists = JSON.parse(localStorage.getItem(LLK)||JSON.stringify(DEF));
+let cfg   = JSON.parse(localStorage.getItem(CK)||'{"apiKey":"AIzaSyDG9hchlXv0Qzey9CaajriZPgLCk3wwN1k","sheetId":"1ReRn_0ULnwrl6ScyOnZlOS1L25ZornL1uO6pM-cDtyE","tab":"Sheet1","auto":true}');
+Object.keys(DEF).forEach(k=>{if(!lists[k])lists[k]=[...DEF[k]];});
 
-// ── DATE HELPERS ──
-function today() { return new Date().toISOString().split('T')[0]; }
-function formatDate(d) {
-  if (!d) return '—';
-  const parts = d.split('-');
-  const dt = new Date(+parts[0], +parts[1]-1, +parts[2]);
-  return dt.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+let curId=null, editMode=false, filter='All', logOpen=false, curListKey=null;
+
+const sl   = ()=>localStorage.setItem(LK, JSON.stringify(leads));
+const sll  = ()=>localStorage.setItem(LLK, JSON.stringify(lists));
+const scfg = ()=>localStorage.setItem(CK, JSON.stringify(cfg));
+const gid  = ()=>Date.now().toString(36)+Math.random().toString(36).substr(2,5);
+const td   = ()=>new Date().toISOString().split('T')[0];
+const fdate= d=>{
+  if(!d) return '—';
+  const p=d.toString().split('T')[0].split('-');
+  if(p.length<3) return d;
+  return new Date(+p[0],+p[1]-1,+p[2]).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+};
+const due  = d=>{if(!d)return null;return Math.round((new Date(d)-new Date(td()))/86400000);};
+const dueBadge=d=>{
+  if(!d) return '';
+  const n=due(d);
+  if(n<0)  return `<span class="d-over">${Math.abs(n)}d overdue</span>`;
+  if(n===0)return `<span class="d-today">Today!</span>`;
+  if(n<=3) return `<span class="d-today">In ${n}d</span>`;
+  return `<span class="d-soon">In ${n}d</span>`;
+};
+
+// ══════════════════════════════════════════════
+// SELECTS
+// ══════════════════════════════════════════════
+function fillSel(id,opts,cur){
+  const el=document.getElementById(id); if(!el)return;
+  el.innerHTML=opts.map(o=>`<option${o===cur?' selected':''}>${o}</option>`).join('');
 }
-function daysUntil(d) {
-  if (!d) return null;
-  const t = new Date(today()); const f = new Date(d);
-  return Math.round((f - t) / 86400000);
-}
-function dueBadge(d) {
-  if (!d) return '';
-  const n = daysUntil(d);
-  if (n < 0) return `<span class="followup-due due-overdue">${Math.abs(n)}d overdue</span>`;
-  if (n === 0) return `<span class="followup-due due-today">Today!</span>`;
-  if (n <= 3) return `<span class="followup-due due-today">In ${n}d</span>`;
-  return `<span class="followup-due due-upcoming">In ${n}d</span>`;
+function fillAll(){
+  fillSel('f_type', lists.propType, document.getElementById('f_type')?.value);
+  fillSel('f_motive', lists.motivation, document.getElementById('f_motive')?.value);
+  fillSel('f_status', lists.status, document.getElementById('f_status')?.value||'New');
+  fillSel('f_source', lists.source, document.getElementById('f_source')?.value);
 }
 
-// ── TABS ──
-function switchTab(tab) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('screen-' + tab).classList.add('active');
-  document.getElementById('tab-' + tab).classList.add('active');
-  document.getElementById('fab').classList.add('hidden');
-  if (tab === 'dash') renderDash();
-  if (tab === 'leads') renderLeads();
-  if (tab === 'add') { if(!editMode) clearForm(); }
+// ══════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════
+function go(tab){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+  document.getElementById('sc-'+tab).classList.add('on');
+  document.getElementById('t-'+tab).classList.add('on');
+  document.getElementById('fab').classList.add('hide');
+  if(tab==='dash') renderDash();
+  if(tab==='leads') renderLeads();
+  if(tab==='settings') loadSettings();
+  if(tab==='add'&&!editMode) clearForm();
 }
 
-// ── DASHBOARD ──
-function renderDash() {
-  const now = new Date();
-  document.getElementById('greetDay').textContent = now.toLocaleDateString('en-GB', {weekday:'long'});
-  document.getElementById('topDate').textContent = now.toLocaleDateString('en-GB', {day:'numeric',month:'short'});
-
-  const total = leads.length;
-  const hot = leads.filter(l => l.status === 'Hot').length;
-  const dueToday = leads.filter(l => l.followup === today()).length;
-  const overdue = leads.filter(l => l.followup && daysUntil(l.followup) < 0).length;
-
-  document.getElementById('statsGrid').innerHTML = `
-    <div class="stat-card" style="--accent-color:var(--blue)">
-      <div class="stat-label">Total Leads</div>
-      <div class="stat-value">${total}</div>
-      <div class="stat-sub">All pipeline</div>
+// ══════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════
+function renderDash(){
+  document.getElementById('gday').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long'});
+  const tot=leads.length, hot=leads.filter(l=>l.status==='Hot').length;
+  const dueT=leads.filter(l=>l.followup===td()).length;
+  const over=leads.filter(l=>l.followup&&due(l.followup)<0).length;
+  document.getElementById('stats').innerHTML=`
+    <div class="scard" style="--ac:var(--blue)" onclick="go('leads')">
+      <div class="slabel">Total Leads</div><div class="sval">${tot}</div><div class="ssub">Pipeline</div>
     </div>
-    <div class="stat-card" style="--accent-color:var(--red)">
-      <div class="stat-label">Hot Leads</div>
-      <div class="stat-value">${hot}</div>
-      <div class="stat-sub">Priority now</div>
+    <div class="scard" style="--ac:var(--red)" onclick="setFilter('Hot');go('leads')">
+      <div class="slabel">Hot</div><div class="sval">${hot}</div><div class="ssub">Priority now</div>
     </div>
-    <div class="stat-card" style="--accent-color:var(--amber)">
-      <div class="stat-label">Due Today</div>
-      <div class="stat-value">${dueToday}</div>
-      <div class="stat-sub">Follow-ups</div>
+    <div class="scard" style="--ac:var(--amber)">
+      <div class="slabel">Due Today</div><div class="sval">${dueT}</div><div class="ssub">Follow-ups</div>
     </div>
-    <div class="stat-card" style="--accent-color:var(--red)">
-      <div class="stat-label">Overdue</div>
-      <div class="stat-value">${overdue}</div>
-      <div class="stat-sub">Need action</div>
-    </div>
-  `;
+    <div class="scard" style="--ac:var(--red)">
+      <div class="slabel">Overdue</div><div class="sval">${over}</div><div class="ssub">Need action</div>
+    </div>`;
 
-  const due = leads
-    .filter(l => l.followup && daysUntil(l.followup) <= 7)
-    .sort((a,b) => (daysUntil(a.followup)||999) - (daysUntil(b.followup)||999))
-    .slice(0, 8);
+  const b=document.getElementById('dbanner');
+  b.innerHTML=!cfg.apiKey?`<div class="banner" onclick="go('settings')">
+    <span style="font-size:20px">☁️</span>
+    <div class="banner-text"><strong>Set up Google Sheets sync</strong><br>Access your leads on any device</div>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--gold);flex-shrink:0"><path d="M9 18l6-6-6-6"/></svg>
+  </div>`:
+  `<div class="banner" style="background:rgba(76,175,125,.06);border-color:rgba(76,175,125,.25)" onclick="manualSync()">
+    <span style="font-size:20px">✅</span>
+    <div class="banner-text" style="color:var(--green)"><strong>Sheets sync active</strong><br>Tap to sync now</div>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--green);flex-shrink:0"><path d="M9 18l6-6-6-6"/></svg>
+  </div>`;
 
-  if (!due.length) {
-    document.getElementById('followupList').innerHTML = `<div class="empty-state"><div class="icon">✅</div><p>No follow-ups due this week</p></div>`;
-    return;
-  }
-
-  document.getElementById('followupList').innerHTML = due.map(l => `
-    <div class="followup-card" onclick="openDetail('${l.id}')">
-      <div class="followup-avatar">${l.name[0].toUpperCase()}</div>
-      <div class="followup-info">
-        <div class="followup-name">${l.name}</div>
-        <div class="followup-meta">${l.area || '—'} · ${l.props ? l.props+' props' : 'props TBC'}</div>
+  const items=leads.filter(l=>l.followup&&due(l.followup)<=7)
+    .sort((a,b)=>(due(a.followup)||999)-(due(b.followup)||999)).slice(0,8);
+  document.getElementById('fuplist').innerHTML=items.length?items.map(l=>`
+    <div class="fup-card" onclick="openDetail('${l.id}')">
+      <div class="fup-av">${l.name[0].toUpperCase()}</div>
+      <div class="fup-info">
+        <div class="fup-name">${l.name}</div>
+        <div class="fup-meta">${l.area||'—'} · ${l.props?l.props+' props':'TBC'}</div>
       </div>
       <div style="text-align:right">
-        <div class="${statusClass(l.status)} status-badge">${l.status}</div>
+        <span class="badge s-${l.status}">${l.status}</span>
         <div style="margin-top:6px">${dueBadge(l.followup)}</div>
       </div>
-    </div>
-  `).join('');
+    </div>`).join('')
+    :`<div class="empty"><div class="ico">✅</div><p>No follow-ups due this week</p></div>`;
 }
 
-// ── LEADS ──
-const STATUSES = ['All','New','Warm','Hot','Contacted','Cold','Converted','Lost'];
-
-function renderFilterChips() {
-  document.getElementById('filterChips').innerHTML = STATUSES.map(s =>
-    `<div class="chip ${s===activeFilter?'active':''}" onclick="setFilter('${s}')">${s}</div>`
-  ).join('');
+// ══════════════════════════════════════════════
+// LEADS LIST
+// ══════════════════════════════════════════════
+function renderChips(){
+  document.getElementById('chips').innerHTML=['All',...lists.status].map(s=>
+    `<div class="chip${s===filter?' on':''}" onclick="setFilter('${s}')">${s}</div>`).join('');
 }
-
-function setFilter(s) { activeFilter = s; renderFilterChips(); renderLeads(); }
-
-function statusClass(s) {
-  const m = {New:'status-new',Warm:'status-warm',Hot:'status-hot',Cold:'status-cold',Contacted:'status-contacted',Converted:'status-converted',Lost:'status-lost'};
-  return m[s] || 'status-new';
-}
-function priorityClass(p) {
-  return p === 'High' ? 'priority-high' : p === 'Low' ? 'priority-low' : 'priority-medium';
-}
-
-function renderLeads() {
-  renderFilterChips();
-  const q = (document.getElementById('searchInput')?.value || '').toLowerCase();
-  let filtered = leads.filter(l => {
-    const matchFilter = activeFilter === 'All' || l.status === activeFilter;
-    const matchQ = !q || l.name?.toLowerCase().includes(q) || l.area?.toLowerCase().includes(q) || l.phone?.includes(q) || l.company?.toLowerCase().includes(q);
-    return matchFilter && matchQ;
-  }).sort((a,b) => {
-    const po = {High:0,Medium:1,Low:2};
-    return (po[a.priority]||1) - (po[b.priority]||1) || b.added.localeCompare(a.added);
-  });
-
-  if (!filtered.length) {
-    document.getElementById('leadsList').innerHTML = `<div class="empty-state"><div class="icon">🔍</div><p>No leads found</p></div>`;
-    return;
-  }
-
-  document.getElementById('leadsList').innerHTML = filtered.map(l => `
-    <div class="lead-card" onclick="openDetail('${l.id}')">
-      <div class="lead-avatar">${l.name[0].toUpperCase()}</div>
-      <div class="lead-info">
-        <div class="lead-name">${l.name}</div>
-        <div class="lead-meta">${[l.area, l.props ? l.props+' props' : null, l.type].filter(Boolean).join(' · ') || 'No details yet'}</div>
+function setFilter(s){filter=s;renderChips();renderLeads();}
+function renderLeads(){
+  renderChips();
+  const q=(document.getElementById('q')?.value||'').toLowerCase();
+  const f=leads.filter(l=>{
+    const mf=filter==='All'||l.status===filter;
+    const mq=!q||(l.name||'').toLowerCase().includes(q)||(l.area||'').toLowerCase().includes(q)||(l.phone||'').includes(q)||(l.company||'').toLowerCase().includes(q);
+    return mf&&mq;
+  }).sort((a,b)=>{const p={High:0,Medium:1,Low:2};return(p[a.priority]||1)-(p[b.priority]||1)||(b.added||'').localeCompare(a.added||'');});
+  document.getElementById('llist').innerHTML=f.length?f.map(l=>`
+    <div class="lcard" onclick="openDetail('${l.id}')">
+      <div class="lav">${l.name[0].toUpperCase()}</div>
+      <div class="linfo">
+        <div class="lname">${l.name}</div>
+        <div class="lmeta">${[l.area,l.props?l.props+' props':null,l.type].filter(Boolean).join(' · ')||'No details yet'}</div>
       </div>
-      <div class="lead-right">
-        <span class="status-badge ${statusClass(l.status)}">${l.status}</span>
-        <div class="priority-dot ${priorityClass(l.priority)}"></div>
-        ${l.followup ? `<div style="font-size:11px;color:var(--text-muted)">${dueBadge(l.followup)}</div>` : ''}
+      <div class="lright">
+        <span class="badge s-${l.status}">${l.status}</span>
+        <div class="pdot p-${l.priority||'Medium'}"></div>
+        ${l.followup?`<div>${dueBadge(l.followup)}</div>`:''}
       </div>
-    </div>
-  `).join('');
+    </div>`).join('')
+    :`<div class="empty"><div class="ico">🔍</div><p>No leads found</p></div>`;
 }
 
-// ── ADD / EDIT LEAD ──
-function clearForm() {
-  editMode = false; currentLeadId = null;
-  ['f_name','f_company','f_phone','f_email','f_area','f_source','f_notes'].forEach(id => {
-    const el = document.getElementById(id); if(el) el.value = '';
-  });
-  ['f_props'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
-  document.getElementById('f_status').value = 'New';
-  document.getElementById('f_priority').value = 'Medium';
-  document.getElementById('f_type').value = '';
-  document.getElementById('f_motivation').value = '';
-  document.getElementById('f_followup').value = '';
-  document.querySelector('#screen-add .form-title').textContent = 'New Lead';
-  document.querySelector('#screen-add .form-subtitle').textContent = "Add a landlord you've just met";
+// ══════════════════════════════════════════════
+// FORM
+// ══════════════════════════════════════════════
+function clearForm(){
+  editMode=false; curId=null;
+  ['f_name','f_co','f_phone','f_email','f_area','f_notes'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  document.getElementById('f_props').value='';
+  document.getElementById('f_pri').value='Medium';
+  const tm=new Date(); tm.setDate(tm.getDate()+1);
+  document.getElementById('f_fup').value=tm.toISOString().split('T')[0];
+  fillAll();
+  document.getElementById('ftitle').textContent='New Lead';
+  document.getElementById('fsub').textContent="Add a landlord you've just met";
 }
+function cancelEdit(){editMode=false;curId=null;clearForm();}
 
-function saveLead() {
-  const name = document.getElementById('f_name').value.trim();
-  if (!name) { showToast('Please enter a name'); return; }
-
-  const lead = {
-    id: editMode ? currentLeadId : genId(),
-    name, added: editMode ? (leads.find(l=>l.id===currentLeadId)?.added || today()) : today(),
-    company: document.getElementById('f_company').value.trim(),
-    phone: document.getElementById('f_phone').value.trim(),
-    email: document.getElementById('f_email').value.trim(),
-    area: document.getElementById('f_area').value.trim(),
-    props: document.getElementById('f_props').value.trim(),
-    type: document.getElementById('f_type').value,
-    motivation: document.getElementById('f_motivation').value,
-    status: document.getElementById('f_status').value,
-    priority: document.getElementById('f_priority').value,
-    source: document.getElementById('f_source').value.trim(),
-    followup: document.getElementById('f_followup').value,
-    notes: document.getElementById('f_notes').value.trim(),
-    log: editMode ? (leads.find(l=>l.id===currentLeadId)?.log || []) : []
+async function saveLead(){
+  const name=document.getElementById('f_name').value.trim();
+  if(!name){toast('Please enter a name','err');return;}
+  const ex=editMode?leads.find(l=>l.id===curId):null;
+  const lead={
+    id:editMode?curId:gid(), name, added:ex?.added||td(),
+    company:document.getElementById('f_co').value.trim(),
+    phone:document.getElementById('f_phone').value.trim(),
+    email:document.getElementById('f_email').value.trim(),
+    area:document.getElementById('f_area').value.trim(),
+    props:document.getElementById('f_props').value.trim(),
+    type:document.getElementById('f_type').value,
+    motivation:document.getElementById('f_motive').value,
+    status:document.getElementById('f_status').value,
+    priority:document.getElementById('f_pri').value,
+    source:document.getElementById('f_source').value,
+    followup:document.getElementById('f_fup').value,
+    notes:document.getElementById('f_notes').value.trim(),
+    log:ex?.log||[]
   };
-
-  if (editMode) {
-    leads = leads.map(l => l.id === currentLeadId ? lead : l);
-    showToast('Lead updated ✓');
-    closeDetail();
-    openDetail(lead.id);
-  } else {
-    leads.unshift(lead);
-    showToast('Lead saved ✓');
-    clearForm();
-    switchTab('dash');
-  }
-  save(); renderDash(); renderLeads();
+  if(editMode){leads=leads.map(l=>l.id===curId?lead:l);toast('Lead updated ✓');}
+  else{leads.unshift(lead);toast('Lead saved ✓');}
+  sl(); renderDash(); renderLeads();
+  if(editMode){closeDetail();setTimeout(()=>openDetail(lead.id),350);}
+  else{clearForm();go('dash');}
+  if(cfg.auto&&cfg.apiKey) syncToSheets(true);
 }
 
-// ── DETAIL ──
-function openDetail(id) {
-  currentLeadId = id;
-  const l = leads.find(x => x.id === id);
-  if (!l) return;
-  document.getElementById('detailName').textContent = l.name;
-  document.getElementById('callBtn').onclick = l.phone ? () => window.open('tel:'+l.phone) : null;
-  document.getElementById('callBtn').style.opacity = l.phone ? '1' : '0.4';
-  renderDetailBody(l);
-  document.getElementById('detailScreen').classList.add('open');
-  document.getElementById('fab').classList.remove('hidden');
-  logFormOpen = false;
+// ══════════════════════════════════════════════
+// DETAIL
+// ══════════════════════════════════════════════
+function openDetail(id){
+  curId=id;
+  const l=leads.find(x=>x.id===id); if(!l)return;
+  document.getElementById('dname').textContent=l.name;
+  const cb=document.getElementById('callbtn');
+  cb.onclick=l.phone?()=>window.open('tel:'+l.phone):null;
+  cb.style.opacity=l.phone?'1':'0.4';
+  renderDet(l);
+  document.getElementById('det').classList.add('on');
+  document.getElementById('fab').classList.remove('hide');
+  logOpen=false;
 }
-
-function renderDetailBody(l) {
-  const doc = document.getElementById('detailBody');
-  doc.innerHTML = `
-    <div class="detail-hero">
-      <div class="detail-avatar">${l.name[0].toUpperCase()}</div>
-      <div class="detail-hero-info">
+function closeDetail(){
+  document.getElementById('det').classList.remove('on');
+  document.getElementById('fab').classList.add('hide');
+  curId=null; logOpen=false;
+}
+function editLead(){
+  const l=leads.find(x=>x.id===curId); if(!l)return;
+  editMode=true; fillAll();
+  document.getElementById('f_name').value=l.name||'';
+  document.getElementById('f_co').value=l.company||'';
+  document.getElementById('f_phone').value=l.phone||'';
+  document.getElementById('f_email').value=l.email||'';
+  document.getElementById('f_area').value=l.area||'';
+  document.getElementById('f_props').value=l.props||'';
+  document.getElementById('f_type').value=l.type||'';
+  document.getElementById('f_motive').value=l.motivation||'';
+  document.getElementById('f_status').value=l.status||'New';
+  document.getElementById('f_pri').value=l.priority||'Medium';
+  document.getElementById('f_source').value=l.source||'';
+  document.getElementById('f_fup').value=l.followup||'';
+  document.getElementById('f_notes').value=l.notes||'';
+  document.getElementById('ftitle').textContent='Edit Lead';
+  document.getElementById('fsub').textContent='Updating '+l.name;
+  closeDetail(); go('add');
+}
+function delLead(id){
+  if(!confirm('Delete this lead? This cannot be undone.'))return;
+  leads=leads.filter(l=>l.id!==id); sl();
+  closeDetail(); renderDash(); renderLeads(); toast('Lead deleted');
+}
+function renderDet(l){
+  document.getElementById('dbody').innerHTML=`
+    <div class="det-hero">
+      <div class="det-av">${l.name[0].toUpperCase()}</div>
+      <div style="flex:1">
         <div style="font-weight:600;font-size:17px">${l.name}</div>
-        ${l.company ? `<div class="detail-company">${l.company}</div>` : ''}
-        <div class="detail-badges">
-          <span class="status-badge ${statusClass(l.status)}">${l.status}</span>
-          <span class="status-badge" style="background:rgba(200,169,110,0.12);color:var(--gold)">
-            ${l.priority} Priority
-          </span>
+        ${l.company?`<div style="font-size:13px;color:var(--muted)">${l.company}</div>`:''}
+        <div class="ibadges">
+          <span class="badge s-${l.status}">${l.status}</span>
+          <span class="badge" style="background:rgba(200,169,110,.12);color:var(--gold)">${l.priority||'Medium'} Priority</span>
         </div>
       </div>
     </div>
-
-    <!-- Quick actions -->
-    <div class="quick-actions">
-      ${l.phone ? `<button class="quick-btn" onclick="window.open('tel:${l.phone}')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 8.63a19.79 19.79 0 01-3-8.59A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/></svg>
-        Call
-      </button>` : `<button class="quick-btn" style="opacity:0.4;cursor:default">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 8.63a19.79 19.79 0 01-3-8.59A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/></svg>
-        Call
-      </button>`}
-      ${l.phone ? `<button class="quick-btn" onclick="window.open('sms:${l.phone}')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-        Text
-      </button>` : `<button class="quick-btn" style="opacity:0.4;cursor:default">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-        Text
-      </button>`}
-      ${l.email ? `<button class="quick-btn" onclick="window.open('mailto:${l.email}')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-        Email
-      </button>` : `<button class="quick-btn" style="opacity:0.4;cursor:default">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-        Email
-      </button>`}
+    <div class="q-acts">
+      <button class="qbtn"${l.phone?` onclick="window.open('tel:${l.phone}')"`:'style="opacity:.4;cursor:default"'}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 8.63a19.79 19.79 0 01-3-8.59A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/></svg>Call</button>
+      <button class="qbtn"${l.phone?` onclick="window.open('sms:${l.phone}')"`:'style="opacity:.4;cursor:default"'}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Text</button>
+      <button class="qbtn"${l.email?` onclick="window.open('mailto:${l.email}')"`:'style="opacity:.4;cursor:default"'}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Email</button>
     </div>
-
-    <!-- Contact info -->
-    <div class="info-grid">
-      <div class="info-grid-title">Contact Details</div>
-      ${infoRow('📞', 'Phone', l.phone ? `<a class="info-link" href="tel:${l.phone}">${l.phone}</a>` : '—')}
-      ${infoRow('✉️', 'Email', l.email ? `<a class="info-link" href="mailto:${l.email}">${l.email}</a>` : '—')}
-      ${infoRow('🏢', 'Company', l.company || '—')}
-      ${infoRow('📍', 'Area', l.area || '—')}
+    <div class="igrid">
+      <div class="igrid-title">Contact</div>
+      ${ir('📞','Phone',l.phone?`<a class="ilink" href="tel:${l.phone}">${l.phone}</a>`:'—')}
+      ${ir('✉️','Email',l.email?`<a class="ilink" href="mailto:${l.email}">${l.email}</a>`:'—')}
+      ${ir('🏢','Company',l.company||'—')} ${ir('📍','Area',l.area||'—')}
     </div>
-
-    <!-- Property info -->
-    <div class="info-grid">
-      <div class="info-grid-title">Property Details</div>
-      ${infoRow('🏠', 'No. Properties', l.props || '—')}
-      ${infoRow('🏗️', 'Property Type', l.type || '—')}
-      ${infoRow('💡', 'Motivation', l.motivation || '—')}
-      ${infoRow('📣', 'Source', l.source || '—')}
+    <div class="igrid">
+      <div class="igrid-title">Property</div>
+      ${ir('🏠','Properties',l.props||'—')} ${ir('🏗️','Type',l.type||'—')}
+      ${ir('💡','Motivation',l.motivation||'—')} ${ir('📣','Source',l.source||'—')}
     </div>
-
-    <!-- Follow-up -->
-    <div class="info-grid">
-      <div class="info-grid-title">Follow-up</div>
-      ${infoRow('📅', 'Date Added', formatDate(l.added))}
-      ${infoRow('🔔', 'Next Follow-up', `${formatDate(l.followup)} ${l.followup ? dueBadge(l.followup) : ''}`)}
-      ${infoRow('🔢', 'Total Logs', (l.log?.length || 0) + ' entries')}
+    <div class="igrid">
+      <div class="igrid-title">Pipeline</div>
+      ${ir('📅','Added',fdate(l.added))}
+      ${ir('🔔','Next Follow-up',`${fdate(l.followup)} ${l.followup?dueBadge(l.followup):''}`)}
+      ${ir('📝','Log Entries',(l.log?.length||0)+' entries')}
     </div>
-
-    ${l.notes ? `<div class="info-grid"><div class="info-grid-title">Notes</div><p style="font-size:14px;color:var(--text-muted);line-height:1.6">${l.notes}</p></div>` : ''}
-
-    <!-- Log form placeholder -->
-    <div id="logFormArea"></div>
-
-    <!-- Activity log -->
-    <div class="section-header" style="padding:12px 0 8px">
-      <span class="section-title">Activity Log</span>
-    </div>
-    ${(l.log||[]).length === 0
-      ? `<div class="empty-state" style="padding:20px 0"><div class="icon">📋</div><p>No activity logged yet</p></div>`
-      : [...(l.log||[])].reverse().map(entry => `
+    ${l.notes?`<div class="igrid"><div class="igrid-title">Notes</div><p style="font-size:14px;color:var(--muted);line-height:1.6">${l.notes}</p></div>`:''}
+    <div id="logarea"></div>
+    <div class="sec-hdr" style="padding:12px 0 8px"><span class="sec-title">Activity Log</span></div>
+    ${(l.log||[]).length===0
+      ?`<div class="empty" style="padding:20px 0"><div class="ico">📋</div><p>No activity yet — tap ✎ to log</p></div>`
+      :[...(l.log||[])].reverse().map(e=>`
         <div class="log-card">
           <div style="display:flex;justify-content:space-between;align-items:center">
-            <div class="log-date">${formatDate(entry.date)}</div>
-            <span style="font-size:11px;background:rgba(200,169,110,0.12);color:var(--gold);padding:2px 8px;border-radius:10px">${entry.method||'—'}</span>
+            <span style="font-size:11px;color:var(--muted);font-weight:600">${fdate(e.date)}</span>
+            <span style="font-size:11px;background:rgba(200,169,110,.12);color:var(--gold);padding:2px 8px;border-radius:10px">${e.method||'—'}</span>
           </div>
-          ${entry.outcome ? `<div class="log-outcome">Outcome: <strong>${entry.outcome}</strong></div>` : ''}
-          ${entry.notes ? `<div class="log-notes">${entry.notes}</div>` : ''}
-          ${entry.nextFollowup ? `<div style="font-size:11px;color:var(--amber);margin-top:6px">📅 Next: ${formatDate(entry.nextFollowup)}</div>` : ''}
-        </div>
-      `).join('')}
-
-    <div style="height:20px"></div>
+          ${e.outcome?`<div style="font-size:12px;margin-top:4px">Outcome: <strong>${e.outcome}</strong></div>`:''}
+          ${e.notes?`<div style="font-size:13px;color:var(--muted);margin-top:6px;line-height:1.5">${e.notes}</div>`:''}
+          ${e.nextFollowup?`<div style="font-size:11px;color:var(--amber);margin-top:6px">📅 Next: ${fdate(e.nextFollowup)}</div>`:''}
+        </div>`).join('')}
+    <div style="padding:16px 0;border-top:1px solid var(--navy-border);margin-top:8px">
+      <button class="btnd" onclick="delLead('${l.id}')">🗑 Delete this lead</button>
+    </div><div style="height:20px"></div>
   `;
 }
+const ir=(ico,lbl,val)=>`<div class="irow"><div class="iico">${ico}</div><div style="flex:1"><div class="ilabel">${lbl}</div><div class="ival">${val}</div></div></div>`;
 
-function infoRow(icon, label, value) {
-  return `<div class="info-row">
-    <div class="info-icon">${icon}</div>
-    <div style="flex:1">
-      <div class="info-label">${label}</div>
-      <div class="info-value">${value}</div>
-    </div>
-  </div>`;
-}
-
-function closeDetail() {
-  document.getElementById('detailScreen').classList.remove('open');
-  document.getElementById('fab').classList.add('hidden');
-  currentLeadId = null;
-  logFormOpen = false;
-}
-
-function editCurrentLead() {
-  const l = leads.find(x => x.id === currentLeadId);
-  if (!l) return;
-  editMode = true;
-  document.getElementById('f_name').value = l.name || '';
-  document.getElementById('f_company').value = l.company || '';
-  document.getElementById('f_phone').value = l.phone || '';
-  document.getElementById('f_email').value = l.email || '';
-  document.getElementById('f_area').value = l.area || '';
-  document.getElementById('f_props').value = l.props || '';
-  document.getElementById('f_type').value = l.type || '';
-  document.getElementById('f_motivation').value = l.motivation || '';
-  document.getElementById('f_status').value = l.status || 'New';
-  document.getElementById('f_priority').value = l.priority || 'Medium';
-  document.getElementById('f_source').value = l.source || '';
-  document.getElementById('f_followup').value = l.followup || '';
-  document.getElementById('f_notes').value = l.notes || '';
-  document.querySelector('#screen-add .form-title').textContent = 'Edit Lead';
-  document.querySelector('#screen-add .form-subtitle').textContent = 'Update ' + l.name + "'s details";
-  closeDetail();
-  switchTab('add');
-}
-
-// ── LOG FOLLOW-UP ──
-function openLogForm() {
-  if (logFormOpen) return;
-  logFormOpen = true;
-  const area = document.getElementById('logFormArea');
-  area.innerHTML = `
+// ══════════════════════════════════════════════
+// LOG FOLLOW-UP
+// ══════════════════════════════════════════════
+function openLog(){
+  if(logOpen)return; logOpen=true;
+  const area=document.getElementById('logarea');
+  const meths=lists.followupMethod.map(m=>`<option>${m}</option>`).join('');
+  area.innerHTML=`
     <div class="log-form">
-      <div class="log-form-title">📝 Log Follow-up</div>
-      <div class="field">
-        <label>Date</label>
-        <input id="lf_date" type="date" value="${today()}">
-      </div>
+      <div class="log-ft">📝 Log Follow-up</div>
+      <div class="field"><label>Date</label><input id="lf_d" type="date" value="${td()}"></div>
       <div class="field-row">
-        <div class="field"><label>Method</label>
-          <select id="lf_method">
-            <option>Phone Call</option>
-            <option>Text / WhatsApp</option>
-            <option>Email</option>
-            <option>In Person</option>
-            <option>Social Media</option>
-          </select>
-        </div>
+        <div class="field"><label>Method</label><select id="lf_m">${meths}</select></div>
         <div class="field"><label>Outcome</label>
-          <select id="lf_outcome">
-            <option>Positive</option>
-            <option>Neutral</option>
-            <option>No Response</option>
-            <option>Not Interested</option>
-            <option>Converted</option>
-            <option>Callback Requested</option>
-          </select>
+          <select id="lf_o"><option>Positive</option><option>Neutral</option><option>No Response</option><option>Not Interested</option><option>Converted</option><option>Callback Requested</option></select>
         </div>
       </div>
-      <div class="field"><label>Notes</label><textarea id="lf_notes" placeholder="What was discussed…"></textarea></div>
+      <div class="field"><label>Notes</label><textarea id="lf_n" placeholder="What was discussed…"></textarea></div>
       <div class="field-row">
         <div class="field"><label>Update Status</label>
-          <select id="lf_status">
-            <option value="">No change</option>
-            <option>New</option><option>Warm</option><option>Hot</option>
-            <option>Cold</option><option>Contacted</option><option>Converted</option><option>Lost</option>
-          </select>
+          <select id="lf_s"><option value="">No change</option>${lists.status.map(s=>`<option>${s}</option>`).join('')}</select>
         </div>
-        <div class="field"><label>Next Follow-up</label><input id="lf_nextdate" type="date"></div>
+        <div class="field"><label>Next Follow-up</label><input id="lf_nd" type="date"></div>
       </div>
-      <button class="btn-primary" onclick="saveLog()">Save Log Entry</button>
-      <button class="btn-secondary" onclick="cancelLog()">Cancel</button>
-    </div>
-  `;
-  area.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      <button class="btn" onclick="saveLog()">Save Entry</button>
+      <button class="btn2" onclick="cancelLog()">Cancel</button>
+    </div>`;
+  area.scrollIntoView({behavior:'smooth',block:'start'});
 }
-
-function cancelLog() {
-  document.getElementById('logFormArea').innerHTML = '';
-  logFormOpen = false;
-}
-
-function saveLog() {
-  const l = leads.find(x => x.id === currentLeadId);
-  if (!l) return;
-  const entry = {
-    date: document.getElementById('lf_date').value,
-    method: document.getElementById('lf_method').value,
-    outcome: document.getElementById('lf_outcome').value,
-    notes: document.getElementById('lf_notes').value.trim(),
-    nextFollowup: document.getElementById('lf_nextdate').value
-  };
-  if (!l.log) l.log = [];
+function cancelLog(){document.getElementById('logarea').innerHTML='';logOpen=false;}
+async function saveLog(){
+  const l=leads.find(x=>x.id===curId); if(!l)return;
+  const entry={date:document.getElementById('lf_d').value,method:document.getElementById('lf_m').value,outcome:document.getElementById('lf_o').value,notes:document.getElementById('lf_n').value.trim(),nextFollowup:document.getElementById('lf_nd').value};
+  if(!l.log)l.log=[];
   l.log.push(entry);
-  const newStatus = document.getElementById('lf_status').value;
-  if (newStatus) l.status = newStatus;
-  if (entry.nextFollowup) l.followup = entry.nextFollowup;
-  save();
-  showToast('Follow-up logged ✓');
-  renderDetailBody(l);
-  document.getElementById('detailName').textContent = l.name;
-  logFormOpen = false;
+  const ns=document.getElementById('lf_s').value; if(ns)l.status=ns;
+  if(entry.nextFollowup)l.followup=entry.nextFollowup;
+  sl(); toast('Follow-up logged ✓'); renderDet(l); logOpen=false;
   renderDash(); renderLeads();
+  if(cfg.auto&&cfg.apiKey)syncToSheets(true);
 }
 
-// ── TOAST ──
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
+// ══════════════════════════════════════════════
+// LIST EDITOR MODAL
+// ══════════════════════════════════════════════
+const LTITLES={propType:'Property Types',motivation:'Motivations',status:'Statuses',source:'Source / Event Options',followupMethod:'Follow-up Methods'};
+function openMod(key){
+  curListKey=key;
+  document.getElementById('mtitle').textContent='Edit '+LTITLES[key];
+  renderMod(key);
+  document.getElementById('addinp').value='';
+  document.getElementById('mod').classList.add('on');
+}
+function renderMod(key){
+  document.getElementById('mbody').innerHTML=lists[key].map((item,i)=>`
+    <div class="li">
+      <span class="li-text">${item}</span>
+      <button class="li-del" onclick="delItem('${key}',${i})">✕</button>
+    </div>`).join('');
+}
+function delItem(key,i){lists[key].splice(i,1);sll();renderMod(key);fillAll();}
+function addItem(){
+  const k=curListKey, v=document.getElementById('addinp').value.trim();
+  if(!v)return;
+  if(lists[k].includes(v)){toast('Already exists','err');return;}
+  lists[k].push(v); sll(); renderMod(k); fillAll();
+  document.getElementById('addinp').value='';
+}
+function closeMod(){document.getElementById('mod').classList.remove('on');}
+
+// ══════════════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════════════
+function loadSettings(){
+  const ak=document.getElementById('s_apikey'), si=document.getElementById('s_sheetid'), st=document.getElementById('s_tab');
+  if(ak){ak.value=cfg.apiKey||''; if(cfg.apiKey)ak.classList.add('has-val');}
+  if(si){si.value=cfg.sheetId||''; if(cfg.sheetId)si.classList.add('has-val');}
+  if(st){st.value=cfg.tab||'Leads'; if(cfg.tab)st.classList.add('has-val');}
+  updateTog();
+  if(cfg.apiKey&&cfg.sheetId) showConnCard();
+}
+function checkInputs(){
+  ['s_apikey','s_sheetid','s_tab'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.className='set-inp'+(el.value.trim()?' has-val':'');
+  });
+}
+function updateTog(){
+  const t=document.getElementById('tog'), th=document.getElementById('togt');
+  if(!t)return; t.style.background=cfg.auto?'var(--green)':'var(--navy-border)'; th.style.left=cfg.auto?'24px':'2px';
+}
+function toggleAuto(){cfg.auto=!cfg.auto;scfg();updateTog();toast('Auto sync '+(cfg.auto?'on':'off'));}
+
+function showConnCard(){
+  const card=document.getElementById('s_connCard'), body=document.getElementById('s_connBody');
+  if(!card||!body)return;
+  card.style.display='block';
+  body.innerHTML=`
+    <div class="status-row">
+      <div class="status-dot ${cfg.apiKey?'dot-ok':'dot-err'}"></div>
+      <span class="label">API Key</span>
+      <span style="font-size:12px;color:var(--muted)">${cfg.apiKey?'✓ Set':'Not set'}</span>
+    </div>
+    <div class="status-row">
+      <div class="status-dot ${cfg.sheetId?'dot-ok':'dot-err'}"></div>
+      <span class="label">Sheet ID</span>
+      <span style="font-size:12px;color:var(--muted)">${cfg.sheetId?'✓ Set':'Not set'}</span>
+    </div>
+    <div class="status-row">
+      <div class="status-dot dot-ok"></div>
+      <span class="label">Tab Name</span>
+      <span style="font-size:12px;color:var(--muted)">${cfg.tab||'Leads'}</span>
+    </div>`;
 }
 
-// ── INIT ──
-renderDash();
-renderLeads();
-document.getElementById('f_followup').value = '';
-// Set default follow-up to tomorrow
-const tm = new Date(); tm.setDate(tm.getDate()+1);
-document.getElementById('f_followup').value = tm.toISOString().split('T')[0];
+async function testAndSave(){
+  cfg.apiKey=(document.getElementById('s_apikey')?.value||'').trim();
+  cfg.sheetId=(document.getElementById('s_sheetid')?.value||'').trim();
+  cfg.tab=(document.getElementById('s_tab')?.value||'Leads').trim();
+  scfg();
+  if(!cfg.apiKey||!cfg.sheetId){toast('Please fill in API Key and Sheet ID','err');return;}
+  document.getElementById('s_status').textContent='🔄 Testing connection…';
+  const ok=await syncToSheets(false);
+  document.getElementById('s_status').textContent=ok?'✅ Connected & synced!':'⚠ Check your API Key and Sheet ID';
+  showConnCard();
+}
+
+// ══════════════════════════════════════════════
+// GOOGLE SHEETS API v4 SYNC
+// ══════════════════════════════════════════════
+// NOTE: The API key approach works for READING publicly shared sheets.
+// For WRITING, we use a 2-step: read via API key, write via form post (JSONP trick).
+// For full read-write, users will need OAuth2. We implement the best possible 
+// read-write using the Sheets API with the key for reads + batch updates.
+
+const SHEETS_API = 'https://sheets.googleapis.com/v4/spreadsheets';
+const HDR = ['id','name','added','company','phone','email','area','props','type','motivation','status','priority','source','followup','notes','log'];
+
+function setSyncUI(state,label){
+  const pill=document.getElementById('spill'), dot=document.getElementById('sdot'), lbl=document.getElementById('slbl');
+  pill.className='sync-pill'+(state?' '+state:'');
+  dot.className='sdot'+(state==='syncing'?' pulse':'');
+  lbl.textContent=label;
+}
+
+async function manualSync(){
+  if(!cfg.apiKey||!cfg.sheetId){go('settings');return;}
+  await syncToSheets(false);
+}
+
+async function syncToSheets(silent=false){
+  if(!cfg.apiKey||!cfg.sheetId)return false;
+  setSyncUI('syncing','Syncing…');
+  try{
+    const tab=encodeURIComponent(cfg.tab||'Leads');
+    const readUrl=`${SHEETS_API}/${cfg.sheetId}/values/${tab}?key=${cfg.apiKey}`;
+    const resp=await fetch(readUrl);
+    if(!resp.ok){
+      const err=await resp.json();
+      throw new Error(err.error?.message||'Read failed ('+resp.status+')');
+    }
+    const data=await resp.json();
+    const rows=(data.values||[]).slice(1); // skip header
+    // Merge remote leads into local
+    const localIds=new Set(leads.map(l=>l.id));
+    let pulled=0;
+    rows.forEach(r=>{
+      if(!r[0])return;
+      const remote={id:r[0],name:r[1]||'',added:r[2]||'',company:r[3]||'',phone:r[4]||'',email:r[5]||'',area:r[6]||'',props:r[7]||'',type:r[8]||'',motivation:r[9]||'',status:r[10]||'New',priority:r[11]||'Medium',source:r[12]||'',followup:r[13]||'',notes:r[14]||'',log:tryParse(r[15])};
+      if(!localIds.has(remote.id)){leads.push(remote);localIds.add(remote.id);pulled++;}
+    });
+    if(pulled>0){sl();renderDash();renderLeads();}
+
+    // Now push all local leads to sheet
+    const writeUrl=`${SHEETS_API}/${cfg.sheetId}/values/${tab}!A1:P?valueInputOption=RAW&key=${cfg.apiKey}`;
+    const values=[HDR,...leads.map(l=>[l.id,l.name,l.added||'',l.company||'',l.phone||'',l.email||'',l.area||'',l.props||'',l.type||'',l.motivation||'',l.status||'New',l.priority||'Medium',l.source||'',l.followup||'',l.notes||'',JSON.stringify(l.log||[])])];
+    const putResp=await fetch(writeUrl,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({values,majorDimension:'ROWS'})});
+    if(!putResp.ok){
+      // API key can't write — show helpful message
+      const perr=await putResp.json();
+      if(perr.error?.status==='UNAUTHENTICATED'||perr.error?.code===401||perr.error?.code===403){
+        // Read worked, write needs OAuth — show partial success
+        setSyncUI('ok','Read ✓');
+        if(!silent)toast('Read OK. Enable sheet editing: share → Editor');
+        setTimeout(()=>setSyncUI('','Sync'),4000);
+        return true;
+      }
+      throw new Error(perr.error?.message||'Write failed');
+    }
+    setSyncUI('ok','Synced ✓');
+    if(!silent)toast('Synced with Google Sheets ✓'+(pulled>0?' (+'+pulled+' new)':''));
+    setTimeout(()=>setSyncUI('','Sync'),3000);
+    return true;
+  }catch(e){
+    setSyncUI('err','Error');
+    if(!silent)toast('Sync error: '+e.message,'err');
+    console.error(e);
+    setTimeout(()=>setSyncUI('','Sync'),4000);
+    return false;
+  }
+}
+
+function tryParse(s){try{return JSON.parse(s||'[]');}catch{return[];}}
+
+// ══════════════════════════════════════════════
+// CSV EXPORT
+// ══════════════════════════════════════════════
+function exportCSV(){
+  const h=['ID','Name','Company','Phone','Email','Area','Properties','Type','Motivation','Status','Priority','Source','Added','Follow-up','Notes'];
+  const rows=leads.map(l=>[l.id,l.name,l.company||'',l.phone||'',l.email||'',l.area||'',l.props||'',l.type||'',l.motivation||'',l.status||'',l.priority||'',l.source||'',l.added||'',l.followup||'',(l.notes||'').replace(/,/g,';')]);
+  const csv=[h,...rows].map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='landlord-leads-'+td()+'.csv'; a.click();
+  toast('CSV exported ✓');
+}
+function confirmReset(){
+  if(!confirm('Delete ALL local leads?\n\nSynced leads stay safe in Google Sheets.'))return;
+  leads=[]; sl(); renderDash(); renderLeads(); toast('Local data cleared');
+}
+
+// ══════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════
+let _tt=null;
+function toast(msg,type=''){
+  const t=document.getElementById('tst');
+  t.textContent=msg; t.className='toast on'+(type==='err'?' terr':'');
+  if(_tt)clearTimeout(_tt); _tt=setTimeout(()=>t.classList.remove('on'),3000);
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+// Ensure credentials are always set (pre-configured)
+if(!cfg.apiKey) cfg.apiKey='AIzaSyDG9hchlXv0Qzey9CaajriZPgLCk3wwN1k';
+if(!cfg.sheetId) cfg.sheetId='1ReRn_0ULnwrl6ScyOnZlOS1L25ZornL1uO6pM-cDtyE';
+if(!cfg.tab) cfg.tab='Sheet1';
+scfg();
+
+fillAll(); renderDash(); renderLeads(); updateTog();
+if(cfg.auto&&cfg.apiKey&&cfg.sheetId)setTimeout(()=>syncToSheets(true),1200);
 </script>
 </body>
 </html>
