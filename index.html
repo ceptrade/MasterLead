@@ -333,41 +333,27 @@ html,body{height:100%;background:var(--navy);color:var(--text);font-family:'DM S
     <div class="set-title">⚙️ Settings</div>
     <div class="set-sub">Connect Google Sheets &amp; customise your app</div>
 
-    <!-- GOOGLE SHEETS API -->
+    <!-- GOOGLE SHEETS SYNC -->
     <div class="set-card">
-      <div class="sc-title">📊 Google Sheets API Sync</div>
-      <div class="sc-sub">Paste your API key and Sheet ID below. Your leads will sync in real-time across all devices — phone, tablet, and computer.</div>
+      <div class="sc-title">📊 Google Sheets Sync</div>
+      <div class="sc-sub">Your app is connected to your Airlandlords Leads Google Sheet. Every lead syncs automatically across all your devices.</div>
+
+      <div style="background:rgba(76,175,125,.08);border:1px solid rgba(76,175,125,.25);border-radius:10px;padding:12px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+        <span style="font-size:20px">✅</span>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--green)">Connected &amp; Ready</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">Airlandlords Leads → Sheet1</div>
+        </div>
+      </div>
 
       <div style="margin-bottom:12px">
-        <div style="font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:500">Google API Key</div>
-        <input class="set-inp" id="s_apikey" placeholder="AIzaSy…" oninput="checkInputs()">
-        <div style="font-size:11px;color:var(--muted)">From Google Cloud Console → Credentials</div>
-      </div>
-      <div style="margin-bottom:12px">
-        <div style="font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:500">Google Sheet ID</div>
-        <input class="set-inp" id="s_sheetid" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms" oninput="checkInputs()">
-        <div style="font-size:11px;color:var(--muted)">From the sheet URL: …/spreadsheets/d/<strong style="color:var(--gold)">SHEET_ID</strong>/edit</div>
-      </div>
-      <div style="margin-bottom:12px">
-        <div style="font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:500">Sheet Tab Name</div>
-        <input class="set-inp" id="s_tab" placeholder="Leads" oninput="checkInputs()">
-        <div style="font-size:11px;color:var(--muted)">The tab name at the bottom of your Google Sheet</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:500">Apps Script URL</div>
+        <input class="set-inp has-val" id="s_url" placeholder="https://script.google.com/…" oninput="checkInputs()">
+        <div style="font-size:11px;color:var(--muted)">Your Google Apps Script Web App URL</div>
       </div>
 
       <div id="s_status" style="font-size:12px;color:var(--muted);min-height:18px;margin-bottom:10px"></div>
-      <button class="btn" style="margin-top:0" onclick="testAndSave()">💾 Save &amp; Test Connection</button>
-
-      <div class="how-to">
-        <div class="how-title">📋 How to get your API Key (3 steps)</div>
-        <div class="how-steps">
-          1. Go to <strong>console.cloud.google.com</strong><br>
-          2. Create a project → Enable <strong>Google Sheets API</strong><br>
-          3. Go to <strong>Credentials → Create API Key</strong><br>
-          4. Click the key → <strong>API restrictions → Google Sheets API</strong><br>
-          5. Copy the key and paste it above<br><br>
-          Then share your Google Sheet with <strong>Anyone with the link → Viewer</strong> (or Editor to allow writes)
-        </div>
-      </div>
+      <button class="btn" style="margin-top:0" onclick="testAndSave()">🔄 Test Connection</button>
     </div>
 
     <!-- CONNECTION STATUS -->
@@ -486,7 +472,7 @@ const DEF={
 
 let leads = JSON.parse(localStorage.getItem(LK)||'[]');
 let lists = JSON.parse(localStorage.getItem(LLK)||JSON.stringify(DEF));
-let cfg   = JSON.parse(localStorage.getItem(CK)||'{"apiKey":"AIzaSyDG9hchlXv0Qzey9CaajriZPgLCk3wwN1k","sheetId":"1ReRn_0ULnwrl6ScyOnZlOS1L25ZornL1uO6pM-cDtyE","tab":"Sheet1","auto":true}');
+let cfg   = JSON.parse(localStorage.getItem(CK)||'{"scriptUrl":"https://script.google.com/macros/s/AKfycbxVx3nLD7Rfr4d9w2hqkbLs_p6SKqaEPgla6mmf93k4uhJIdbNZ41Heh8UIOTY-B6PFwA/exec","auto":true}');
 Object.keys(DEF).forEach(k=>{if(!lists[k])lists[k]=[...DEF[k]];});
 
 let curId=null, editMode=false, filter='All', logOpen=false, curListKey=null;
@@ -564,7 +550,7 @@ function renderDash(){
     </div>`;
 
   const b=document.getElementById('dbanner');
-  b.innerHTML=!cfg.apiKey?`<div class="banner" onclick="go('settings')">
+  b.innerHTML=!cfg.scriptUrl?`<div class="banner" onclick="go('settings')">
     <span style="font-size:20px">☁️</span>
     <div class="banner-text"><strong>Set up Google Sheets sync</strong><br>Access your leads on any device</div>
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--gold);flex-shrink:0"><path d="M9 18l6-6-6-6"/></svg>
@@ -665,7 +651,7 @@ async function saveLead(){
   sl(); renderDash(); renderLeads();
   if(editMode){closeDetail();setTimeout(()=>openDetail(lead.id),350);}
   else{clearForm();go('dash');}
-  if(cfg.auto&&cfg.apiKey) syncToSheets(true);
+  if(cfg.auto&&cfg.scriptUrl) syncToSheets(true);
 }
 
 // ══════════════════════════════════════════════
@@ -812,7 +798,7 @@ async function saveLog(){
   if(entry.nextFollowup)l.followup=entry.nextFollowup;
   sl(); toast('Follow-up logged ✓'); renderDet(l); logOpen=false;
   renderDash(); renderLeads();
-  if(cfg.auto&&cfg.apiKey)syncToSheets(true);
+  if(cfg.auto&&cfg.scriptUrl)syncToSheets(true);
 }
 
 // ══════════════════════════════════════════════
@@ -847,18 +833,14 @@ function closeMod(){document.getElementById('mod').classList.remove('on');}
 // SETTINGS
 // ══════════════════════════════════════════════
 function loadSettings(){
-  const ak=document.getElementById('s_apikey'), si=document.getElementById('s_sheetid'), st=document.getElementById('s_tab');
-  if(ak){ak.value=cfg.apiKey||''; if(cfg.apiKey)ak.classList.add('has-val');}
-  if(si){si.value=cfg.sheetId||''; if(cfg.sheetId)si.classList.add('has-val');}
-  if(st){st.value=cfg.tab||'Leads'; if(cfg.tab)st.classList.add('has-val');}
+  const su=document.getElementById('s_url');
+  if(su){su.value=cfg.scriptUrl||'';if(cfg.scriptUrl)su.classList.add('has-val');}
   updateTog();
-  if(cfg.apiKey&&cfg.sheetId) showConnCard();
+  showConnCard();
 }
 function checkInputs(){
-  ['s_apikey','s_sheetid','s_tab'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el) el.className='set-inp'+(el.value.trim()?' has-val':'');
-  });
+  const el=document.getElementById('s_url');
+  if(el) el.className='set-inp'+(el.value.trim()?' has-val':'');
 }
 function updateTog(){
   const t=document.getElementById('tog'), th=document.getElementById('togt');
@@ -872,45 +854,30 @@ function showConnCard(){
   card.style.display='block';
   body.innerHTML=`
     <div class="status-row">
-      <div class="status-dot ${cfg.apiKey?'dot-ok':'dot-err'}"></div>
-      <span class="label">API Key</span>
-      <span style="font-size:12px;color:var(--muted)">${cfg.apiKey?'✓ Set':'Not set'}</span>
+      <div class="status-dot ${cfg.scriptUrl?'dot-ok':'dot-err'}"></div>
+      <span class="label">Apps Script URL</span>
+      <span style="font-size:12px;color:var(--muted)">${cfg.scriptUrl?'✓ Connected':'Not set'}</span>
     </div>
     <div class="status-row">
-      <div class="status-dot ${cfg.sheetId?'dot-ok':'dot-err'}"></div>
-      <span class="label">Sheet ID</span>
-      <span style="font-size:12px;color:var(--muted)">${cfg.sheetId?'✓ Set':'Not set'}</span>
-    </div>
-    <div class="status-row">
-      <div class="status-dot dot-ok"></div>
-      <span class="label">Tab Name</span>
-      <span style="font-size:12px;color:var(--muted)">${cfg.tab||'Leads'}</span>
+      <div class="status-dot ${cfg.auto?'dot-ok':'dot-pending'}"></div>
+      <span class="label">Auto Sync</span>
+      <span style="font-size:12px;color:var(--muted)">${cfg.auto?'On':'Off'}</span>
     </div>`;
 }
 
 async function testAndSave(){
-  cfg.apiKey=(document.getElementById('s_apikey')?.value||'').trim();
-  cfg.sheetId=(document.getElementById('s_sheetid')?.value||'').trim();
-  cfg.tab=(document.getElementById('s_tab')?.value||'Leads').trim();
+  cfg.scriptUrl=(document.getElementById('s_url')?.value||'').trim();
   scfg();
-  if(!cfg.apiKey||!cfg.sheetId){toast('Please fill in API Key and Sheet ID','err');return;}
+  if(!cfg.scriptUrl){toast('Please paste the Apps Script URL','err');return;}
   document.getElementById('s_status').textContent='🔄 Testing connection…';
   const ok=await syncToSheets(false);
-  document.getElementById('s_status').textContent=ok?'✅ Connected & synced!':'⚠ Check your API Key and Sheet ID';
+  document.getElementById('s_status').textContent=ok?'✅ Connected & synced!':'⚠ Check the URL and try again';
   showConnCard();
 }
 
 // ══════════════════════════════════════════════
-// GOOGLE SHEETS API v4 SYNC
+// GOOGLE APPS SCRIPT SYNC (read+write)
 // ══════════════════════════════════════════════
-// NOTE: The API key approach works for READING publicly shared sheets.
-// For WRITING, we use a 2-step: read via API key, write via form post (JSONP trick).
-// For full read-write, users will need OAuth2. We implement the best possible 
-// read-write using the Sheets API with the key for reads + batch updates.
-
-const SHEETS_API = 'https://sheets.googleapis.com/v4/spreadsheets';
-const HDR = ['id','name','added','company','phone','email','area','props','type','motivation','status','priority','source','followup','notes','log'];
-
 function setSyncUI(state,label){
   const pill=document.getElementById('spill'), dot=document.getElementById('sdot'), lbl=document.getElementById('slbl');
   pill.className='sync-pill'+(state?' '+state:'');
@@ -919,57 +886,40 @@ function setSyncUI(state,label){
 }
 
 async function manualSync(){
-  if(!cfg.apiKey||!cfg.sheetId){go('settings');return;}
+  if(!cfg.scriptUrl){go('settings');return;}
   await syncToSheets(false);
 }
 
 async function syncToSheets(silent=false){
-  if(!cfg.apiKey||!cfg.sheetId)return false;
+  if(!cfg.scriptUrl)return false;
   setSyncUI('syncing','Syncing…');
   try{
-    const tab=encodeURIComponent(cfg.tab||'Leads');
-    const readUrl=`${SHEETS_API}/${cfg.sheetId}/values/${tab}?key=${cfg.apiKey}`;
-    const resp=await fetch(readUrl);
-    if(!resp.ok){
-      const err=await resp.json();
-      throw new Error(err.error?.message||'Read failed ('+resp.status+')');
-    }
-    const data=await resp.json();
-    const rows=(data.values||[]).slice(1); // skip header
-    // Merge remote leads into local
-    const localIds=new Set(leads.map(l=>l.id));
-    let pulled=0;
-    rows.forEach(r=>{
-      if(!r[0])return;
-      const remote={id:r[0],name:r[1]||'',added:r[2]||'',company:r[3]||'',phone:r[4]||'',email:r[5]||'',area:r[6]||'',props:r[7]||'',type:r[8]||'',motivation:r[9]||'',status:r[10]||'New',priority:r[11]||'Medium',source:r[12]||'',followup:r[13]||'',notes:r[14]||'',log:tryParse(r[15])};
-      if(!localIds.has(remote.id)){leads.push(remote);localIds.add(remote.id);pulled++;}
+    const res=await fetch(cfg.scriptUrl,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'sync',leads})
     });
-    if(pulled>0){sl();renderDash();renderLeads();}
-
-    // Now push all local leads to sheet
-    const writeUrl=`${SHEETS_API}/${cfg.sheetId}/values/${tab}!A1:P?valueInputOption=RAW&key=${cfg.apiKey}`;
-    const values=[HDR,...leads.map(l=>[l.id,l.name,l.added||'',l.company||'',l.phone||'',l.email||'',l.area||'',l.props||'',l.type||'',l.motivation||'',l.status||'New',l.priority||'Medium',l.source||'',l.followup||'',l.notes||'',JSON.stringify(l.log||[])])];
-    const putResp=await fetch(writeUrl,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({values,majorDimension:'ROWS'})});
-    if(!putResp.ok){
-      // API key can't write — show helpful message
-      const perr=await putResp.json();
-      if(perr.error?.status==='UNAUTHENTICATED'||perr.error?.code===401||perr.error?.code===403){
-        // Read worked, write needs OAuth — show partial success
-        setSyncUI('ok','Read ✓');
-        if(!silent)toast('Read OK. Enable sheet editing: share → Editor');
-        setTimeout(()=>setSyncUI('','Sync'),4000);
-        return true;
-      }
-      throw new Error(perr.error?.message||'Write failed');
+    const data=await res.json();
+    if(data.status!=='ok') throw new Error(data.message||'Sync failed');
+    if(data.leads?.length){
+      const ids=new Set(leads.map(l=>l.id));
+      let added=0;
+      data.leads.forEach(l=>{
+        if(!ids.has(l.id)){leads.push(l);ids.add(l.id);added++;}
+        else{
+          const idx=leads.findIndex(x=>x.id===l.id);
+          if(idx>=0&&l.updated&&(!leads[idx].updated||l.updated>leads[idx].updated))leads[idx]=l;
+        }
+      });
+      if(added>0){sl();renderDash();renderLeads();}
     }
     setSyncUI('ok','Synced ✓');
-    if(!silent)toast('Synced with Google Sheets ✓'+(pulled>0?' (+'+pulled+' new)':''));
+    if(!silent)toast('Synced with Google Sheets ✓');
     setTimeout(()=>setSyncUI('','Sync'),3000);
     return true;
   }catch(e){
     setSyncUI('err','Error');
     if(!silent)toast('Sync error: '+e.message,'err');
-    console.error(e);
     setTimeout(()=>setSyncUI('','Sync'),4000);
     return false;
   }
@@ -1007,14 +957,12 @@ function toast(msg,type=''){
 // ══════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════
-// Ensure credentials are always set (pre-configured)
-if(!cfg.apiKey) cfg.apiKey='AIzaSyDG9hchlXv0Qzey9CaajriZPgLCk3wwN1k';
-if(!cfg.sheetId) cfg.sheetId='1ReRn_0ULnwrl6ScyOnZlOS1L25ZornL1uO6pM-cDtyE';
-if(!cfg.tab) cfg.tab='Sheet1';
+// Ensure script URL always set
+if(!cfg.scriptUrl) cfg.scriptUrl='https://script.google.com/macros/s/AKfycbxVx3nLD7Rfr4d9w2hqkbLs_p6SKqaEPgla6mmf93k4uhJIdbNZ41Heh8UIOTY-B6PFwA/exec';
 scfg();
 
 fillAll(); renderDash(); renderLeads(); updateTog();
-if(cfg.auto&&cfg.apiKey&&cfg.sheetId)setTimeout(()=>syncToSheets(true),1200);
+if(cfg.auto&&cfg.scriptUrl)setTimeout(()=>syncToSheets(true),1200);
 </script>
 </body>
 </html>
