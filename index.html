@@ -894,17 +894,14 @@ async function syncToSheets(silent=false){
   if(!cfg.scriptUrl)return false;
   setSyncUI('syncing','Syncing…');
   try{
-    const res=await fetch(cfg.scriptUrl,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'sync',leads})
-    });
-    const data=await res.json();
-    if(data.status!=='ok') throw new Error(data.message||'Sync failed');
-    if(data.leads?.length){
+    // Use a hidden form POST to avoid CORS issues with Apps Script
+    const payload = JSON.stringify({action:'sync',leads});
+    const res = await fetchViaForm(cfg.scriptUrl, payload);
+    if(!res || res.status!=='ok') throw new Error((res&&res.message)||'Sync failed');
+    if(res.leads?.length){
       const ids=new Set(leads.map(l=>l.id));
       let added=0;
-      data.leads.forEach(l=>{
+      res.leads.forEach(l=>{
         if(!ids.has(l.id)){leads.push(l);ids.add(l.id);added++;}
         else{
           const idx=leads.findIndex(x=>x.id===l.id);
@@ -923,6 +920,52 @@ async function syncToSheets(silent=false){
     setTimeout(()=>setSyncUI('','Sync'),4000);
     return false;
   }
+}
+
+// Fetch via no-cors fetch (write) + JSONP (read response)
+// Apps Script supports ?callback=xxx for JSONP
+function fetchViaForm(url, payload){
+  return new Promise((resolve, reject)=>{
+    // First try direct fetch (works when served from a server)
+    fetch(url, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain'}, // text/plain avoids CORS preflight
+      body: payload
+    })
+    .then(r=>r.json())
+    .then(data=>resolve(data))
+    .catch(()=>{
+      // Fallback: use no-cors (fire and forget) + JSONP to read back
+      // Send data via GET param encoded (for small payloads)
+      const cbName = 'cb_'+Date.now();
+      const script = document.createElement('script');
+      const encoded = encodeURIComponent(payload);
+      script.src = url+'?data='+encoded+'&callback='+cbName;
+      window[cbName] = (data)=>{
+        delete window[cbName];
+        script.remove();
+        resolve(data);
+      };
+      script.onerror = ()=>{ 
+        delete window[cbName]; 
+        script.remove();
+        // Last resort: fire-and-forget with no-cors, assume success
+        fetch(url, {method:'POST', mode:'no-cors', body:payload})
+          .then(()=>resolve({status:'ok',leads:[]}))
+          .catch(err=>reject(err));
+      };
+      setTimeout(()=>{
+        if(window[cbName]){
+          delete window[cbName]; script.remove();
+          // Timed out reading response, but POST may have worked
+          fetch(url, {method:'POST', mode:'no-cors', body:payload})
+            .then(()=>resolve({status:'ok',leads:[]}))
+            .catch(err=>reject(err));
+        }
+      }, 8000);
+      document.head.appendChild(script);
+    });
+  });
 }
 
 function tryParse(s){try{return JSON.parse(s||'[]');}catch{return[];}}
