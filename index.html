@@ -60,7 +60,11 @@ html,body{height:100%;background:var(--navy);color:var(--text);font-family:'DM S
 .sec-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);}
 .sec-link{font-size:12px;color:var(--gold);cursor:pointer;}
 .fup-list{padding:0 20px 20px;display:flex;flex-direction:column;gap:8px;}
-.fup-card{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color .2s;}
+.fup-card{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;transition:border-color .2s;}
+.fup-act-btn{width:30px;height:30px;border-radius:8px;border:1px solid var(--navy-border);background:var(--navy);display:flex;align-items:center;justify-content:center;color:var(--text);cursor:pointer;transition:all .15s;flex-shrink:0;}
+.fup-act-btn:active{transform:scale(.92);}
+.fup-act-btn.wa{color:#25D366;border-color:rgba(37,211,102,.3);}
+.fup-act-btn.log{color:var(--gold);border-color:rgba(200,169,110,.3);}
 .fup-card:active{border-color:var(--gold);}
 .fup-av{width:40px;height:40px;border-radius:50%;background:var(--navy-border);display:flex;align-items:center;justify-content:center;font-family:'DM Serif Display',serif;font-size:16px;color:var(--gold);flex-shrink:0;}
 .fup-info{flex:1;min-width:0;}
@@ -567,15 +571,26 @@ function renderDash(){
   const items=leads.filter(l=>l.followup&&due(l.followup)<=7)
     .sort((a,b)=>(due(a.followup)||999)-(due(b.followup)||999)).slice(0,8);
   document.getElementById('fuplist').innerHTML=items.length?items.map(l=>`
-    <div class="fup-card" onclick="openDetail('${l.id}')">
-      <div class="fup-av">${l.name[0].toUpperCase()}</div>
-      <div class="fup-info">
+    <div class="fup-card">
+      <div class="fup-av" onclick="openDetail('${l.id}')">${l.name[0].toUpperCase()}</div>
+      <div class="fup-info" onclick="openDetail('${l.id}')" style="cursor:pointer">
         <div class="fup-name">${l.name}</div>
         <div class="fup-meta">${l.area||'—'} · ${l.props?l.props+' props':'TBC'}</div>
+        <div style="margin-top:5px">${dueBadge(l.followup)}</div>
       </div>
-      <div style="text-align:right">
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
         <span class="badge s-${l.status}">${l.status}</span>
-        <div style="margin-top:6px">${dueBadge(l.followup)}</div>
+        <div style="display:flex;gap:6px;margin-top:2px">
+          ${l.phone?`<button class="fup-act-btn" onclick="event.stopPropagation();window.open('tel:${l.phone}')" title="Call">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 8.63a19.79 19.79 0 01-3-8.59A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/></svg>
+          </button>`:''}
+          ${l.phone?`<button class="fup-act-btn wa" onclick="event.stopPropagation();window.open('https://wa.me/${l.phone.replace(/\D/g,'')}')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          </button>`:''}
+          <button class="fup-act-btn log" onclick="event.stopPropagation();openDetail('${l.id}');setTimeout(openLog,400)" title="Log follow-up">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </button>
+        </div>
       </div>
     </div>`).join('')
     :`<div class="empty"><div class="ico">✅</div><p>No follow-ups due this week</p></div>`;
@@ -687,7 +702,9 @@ function closeDetail(){
 }
 function editLead(){
   const l=leads.find(x=>x.id===curId); if(!l)return;
-  editMode=true; fillAll();
+  const editId=l.id; // save ID before closeDetail() clears curId
+  editMode=true;
+  fillAll();
   document.getElementById('f_name').value=l.name||'';
   document.getElementById('f_co').value=l.company||'';
   document.getElementById('f_phone').value=l.phone||'';
@@ -703,7 +720,11 @@ function editLead(){
   document.getElementById('f_notes').value=l.notes||'';
   document.getElementById('ftitle').textContent='Edit Lead';
   document.getElementById('fsub').textContent='Updating '+l.name;
-  closeDetail(); go('add');
+  // close detail panel (which clears curId), then restore it
+  document.getElementById('det').classList.remove('on');
+  document.getElementById('fab').classList.add('hide');
+  curId=editId; // restore AFTER closeDetail wipes it
+  go('add');
 }
 function delLead(id){
   if(!confirm('Delete this lead? This cannot be undone.'))return;
@@ -788,13 +809,17 @@ function openLog(){
         </div>
       </div>
       <div class="field"><label>Notes</label><textarea id="lf_n" placeholder="What was discussed…"></textarea></div>
+      <div class="field" style="background:rgba(200,169,110,.06);border:1px solid rgba(200,169,110,.2);border-radius:10px;padding:10px 12px">
+        <label style="color:var(--gold)">📅 Set Next Follow-up Date</label>
+        <input id="lf_nd" type="date" style="border-color:rgba(200,169,110,.3)">
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Set this to reschedule the lead on your dashboard</div>
+      </div>
       <div class="field-row">
         <div class="field"><label>Update Status</label>
           <select id="lf_s"><option value="">No change</option>${lists.status.map(s=>`<option>${s}</option>`).join('')}</select>
         </div>
-        <div class="field"><label>Next Follow-up</label><input id="lf_nd" type="date"></div>
       </div>
-      <button class="btn" onclick="saveLog()">Save Entry</button>
+      <button class="btn" onclick="saveLog()">✓ Save &amp; Reschedule</button>
       <button class="btn2" onclick="cancelLog()">Cancel</button>
     </div>`;
   area.scrollIntoView({behavior:'smooth',block:'start'});
