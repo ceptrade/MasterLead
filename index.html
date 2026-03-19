@@ -568,8 +568,8 @@ function renderDash(){
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--green);flex-shrink:0"><path d="M9 18l6-6-6-6"/></svg>
   </div>`;
 
-  const items=leads.filter(l=>l.followup&&due(l.followup)<=7)
-    .sort((a,b)=>(due(a.followup)||999)-(due(b.followup)||999)).slice(0,8);
+  const items=leads.filter(l=>l.followup&&due(l.followup)<=14)
+    .sort((a,b)=>(due(a.followup)||999)-(due(b.followup)||999));
   document.getElementById('fuplist').innerHTML=items.length?items.map(l=>`
     <div class="fup-card">
       <div class="fup-av" onclick="openDetail('${l.id}')">${l.name[0].toUpperCase()}</div>
@@ -611,7 +611,11 @@ function renderLeads(){
     const mf=filter==='All'||l.status===filter;
     const mq=!q||(l.name||'').toLowerCase().includes(q)||(l.area||'').toLowerCase().includes(q)||(l.phone||'').includes(q)||(l.company||'').toLowerCase().includes(q);
     return mf&&mq;
-  }).sort((a,b)=>{const p={High:0,Medium:1,Low:2};return(p[a.priority]||1)-(p[b.priority]||1)||(b.added||'').localeCompare(a.added||'');});
+  }).sort((a,b)=>{
+    if(filter==='All') return (a.name||'').localeCompare(b.name||'');
+    const p={High:0,Medium:1,Low:2};
+    return(p[a.priority]||1)-(p[b.priority]||1)||(b.added||'').localeCompare(a.added||'');
+  });
   document.getElementById('llist').innerHTML=f.length?f.map(l=>`
     <div class="lcard" onclick="openDetail('${l.id}')">
       <div class="lav">${l.name[0].toUpperCase()}</div>
@@ -774,16 +778,26 @@ function renderDet(l){
     <div class="sec-hdr" style="padding:12px 0 8px"><span class="sec-title">Activity Log</span></div>
     ${(l.log||[]).length===0
       ?`<div class="empty" style="padding:20px 0"><div class="ico">📋</div><p>No activity yet — tap ✎ to log</p></div>`
-      :[...(l.log||[])].reverse().map(e=>`
+      :[...(l.log||[])].reverse().map(e=>{
+        const actionLabels={income:'💰 Sent Potential Income',contract:'📄 Sent Contract',followup:'📞 General Follow-up'};
+        const actionLabel=e.action?actionLabels[e.action]:'';
+        const statusColour={Warm:'#ffa726',Hot:'#ef5350',New:'#5c6bc0',Contacted:'#26c6da'}[e.statusChange]||'var(--green)';
+        // handle old entries (ts field) and new entries (date field)
+        const entryDate=e.date?fdate(e.date):(e.ts||'');
+        return `
         <div class="log-card">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <span style="font-size:11px;color:var(--muted);font-weight:600">${fdate(e.date)}</span>
-            <span style="font-size:11px;background:rgba(200,169,110,.12);color:var(--gold);padding:2px 8px;border-radius:10px">${e.method||'—'}</span>
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px">
+            <span style="font-size:11px;color:var(--muted);font-weight:600">${entryDate}</span>
+            ${e.method?`<span style="font-size:11px;background:rgba(200,169,110,.12);color:var(--gold);padding:2px 8px;border-radius:10px">${e.method}</span>`:''}
           </div>
-          ${e.outcome?`<div style="font-size:12px;margin-top:4px">Outcome: <strong>${e.outcome}</strong></div>`:''}
+          ${actionLabel?`<div style="font-size:12px;font-weight:600;color:var(--text);margin-top:6px">${actionLabel}</div>`:''}
+          ${e.statusChange?`<div style="font-size:11px;margin-top:4px">Status → <strong style="color:${statusColour}">${e.statusChange}</strong></div>`:''}
+          ${e.outcome?`<div style="font-size:12px;margin-top:4px;color:var(--muted)">Outcome: <strong style="color:var(--text)">${e.outcome}</strong></div>`:''}
           ${e.notes?`<div style="font-size:13px;color:var(--muted);margin-top:6px;line-height:1.5">${e.notes}</div>`:''}
-          ${e.nextFollowup?`<div style="font-size:11px;color:var(--amber);margin-top:6px">📅 Next: ${fdate(e.nextFollowup)}</div>`:''}
-        </div>`).join('')}
+          ${e.note?`<div style="font-size:12px;color:var(--muted);margin-top:4px;font-style:italic">${e.note}</div>`:''}
+          ${e.prevFollowup&&e.nextFollowup?`<div style="font-size:11px;color:var(--amber);margin-top:6px;display:flex;align-items:center;gap:6px">📅 <span style="text-decoration:line-through;opacity:.5">${fdate(e.prevFollowup)}</span> → <strong>${fdate(e.nextFollowup)}</strong></div>`:
+            e.nextFollowup?`<div style="font-size:11px;color:var(--amber);margin-top:6px">📅 Next: <strong>${fdate(e.nextFollowup)}</strong></div>`:''}
+        </div>`;}).join('')}
     <div style="padding:16px 0;border-top:1px solid var(--navy-border);margin-top:8px">
       <button class="btnd" onclick="delLead('${l.id}')">🗑 Delete this lead</button>
     </div><div style="height:20px"></div>
@@ -801,47 +815,88 @@ function openLog(){
   area.innerHTML=`
     <div class="log-form">
       <div class="log-ft">📝 Log Follow-up</div>
-      <div class="field"><label>Date</label><input id="lf_d" type="date" value="${td()}"></div>
       <div class="field-row">
+        <div class="field"><label>Date of Contact</label><input id="lf_d" type="date" value="${td()}"></div>
         <div class="field"><label>Method</label><select id="lf_m">${meths}</select></div>
-        <div class="field"><label>Outcome</label>
-          <select id="lf_o"><option>Positive</option><option>Neutral</option><option>No Response</option><option>Not Interested</option><option>Converted</option><option>Callback Requested</option></select>
-        </div>
       </div>
       <div class="field"><label>Notes</label><textarea id="lf_n" placeholder="What was discussed…"></textarea></div>
-      <div class="field" style="background:rgba(200,169,110,.06);border:1px solid rgba(200,169,110,.2);border-radius:10px;padding:10px 12px">
-        <label style="color:var(--gold)">📅 Set Next Follow-up Date</label>
-        <input id="lf_nd" type="date" style="border-color:rgba(200,169,110,.3)">
-        <div style="font-size:11px;color:var(--muted);margin-top:4px">Set this to reschedule the lead on your dashboard</div>
-      </div>
-      <div class="field-row">
-        <div class="field"><label>Update Status</label>
-          <select id="lf_s"><option value="">No change</option>${lists.status.map(s=>`<option>${s}</option>`).join('')}</select>
+
+      <div style="background:rgba(200,169,110,.06);border:1px solid rgba(200,169,110,.25);border-radius:12px;padding:14px;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:10px;letter-spacing:.05em">PIPELINE ACTION</div>
+        <div class="field-row" style="margin-bottom:0">
+          <div class="field" style="margin-bottom:0">
+            <label>What did you send?</label>
+            <select id="lf_action">
+              <option value="">Nothing sent</option>
+              <option value="income">💰 Sent Potential Income</option>
+              <option value="contract">📄 Sent Contract</option>
+              <option value="followup">📞 General Follow-up</option>
+            </select>
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label>Outcome</label>
+            <select id="lf_o"><option>Positive</option><option>Neutral</option><option>No Response</option><option>Not Interested</option><option>Callback Requested</option></select>
+          </div>
         </div>
+        <div id="lf_action_hint" style="font-size:11px;color:var(--muted);margin-top:8px;display:none"></div>
       </div>
+
+      <div class="field" style="background:rgba(200,169,110,.06);border:1px solid rgba(200,169,110,.2);border-radius:10px;padding:10px 12px">
+        <label style="color:var(--gold)">📅 Next Follow-up Date</label>
+        <input id="lf_nd" type="date" style="border-color:rgba(200,169,110,.3)">
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Required — sets when this lead reappears on your dashboard</div>
+      </div>
+
       <button class="btn" onclick="saveLog()">✓ Save &amp; Reschedule</button>
       <button class="btn2" onclick="cancelLog()">Cancel</button>
     </div>`;
+  // Wire the action dropdown hint
+  setTimeout(()=>{
+    const sel=document.getElementById('lf_action');
+    const hint=document.getElementById('lf_action_hint');
+    if(sel&&hint){
+      sel.onchange=()=>{
+        if(sel.value==='income'){hint.style.display='block';hint.innerHTML='✅ Status will move to <strong style="color:#ffa726">Warm</strong> automatically';}
+        else if(sel.value==='contract'){hint.style.display='block';hint.innerHTML='🔥 Status will move to <strong style="color:#ef5350">Hot</strong> automatically';}
+        else{hint.style.display='none';}
+      };
+    }
+  },100);
   area.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function cancelLog(){document.getElementById('logarea').innerHTML='';logOpen=false;}
 async function saveLog(){
   const idx=leads.findIndex(x=>x.id===curId); if(idx<0)return;
+  const nextDate=document.getElementById('lf_nd').value;
+  if(!nextDate){toast('Please set a Next Follow-up Date','err');return;}
   const l={...leads[idx]};
+  const action=document.getElementById('lf_action')?.value||'';
+  const prevFollowup=l.followup||'';
+  // Auto-status from pipeline action
+  let autoStatus='';
+  if(action==='income') autoStatus='Warm';
+  if(action==='contract') autoStatus='Hot';
+  // Build rich log entry
   const entry={
     date:document.getElementById('lf_d').value,
     method:document.getElementById('lf_m').value,
     outcome:document.getElementById('lf_o').value,
     notes:document.getElementById('lf_n').value.trim(),
-    nextFollowup:document.getElementById('lf_nd').value
+    action:action,
+    prevFollowup:prevFollowup,
+    nextFollowup:nextDate,
+    statusChange:autoStatus||''
   };
   if(!l.log)l.log=[];
   l.log=[...l.log,entry];
-  const ns=document.getElementById('lf_s').value; if(ns)l.status=ns;
-  if(entry.nextFollowup){l.followup=entry.nextFollowup;}
+  if(autoStatus) l.status=autoStatus;
+  l.followup=nextDate;
   l.updated=Date.now();
-  leads[idx]=l;  // write mutated copy back into array
-  sl(); toast('Follow-up logged ✓'); renderDet(l); logOpen=false;
+  leads[idx]=l;
+  sl();
+  const msgs={income:'💰 Income sent — moved to Warm',contract:'📄 Contract sent — moved to Hot','':'Follow-up logged ✓'};
+  toast(msgs[action]||'Follow-up logged ✓');
+  renderDet(l); logOpen=false;
   renderDash(); renderLeads();
   if(cfg.auto&&cfg.scriptUrl)syncToSheets(true);
 }
