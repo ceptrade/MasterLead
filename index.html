@@ -62,6 +62,10 @@ html,body{height:100%;background:var(--navy);color:var(--text);font-family:'DM S
 .fup-list{padding:0 20px 20px;display:flex;flex-direction:column;gap:8px;}
 .fup-card{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;transition:border-color .2s;}
 .fup-act-btn{width:30px;height:30px;border-radius:8px;border:1px solid var(--navy-border);background:var(--navy);display:flex;align-items:center;justify-content:center;color:var(--text);cursor:pointer;transition:all .15s;flex-shrink:0;}
+.pipe-tog{flex:1;padding:10px 8px;border-radius:10px;border:1px solid var(--navy-border);background:var(--navy);color:var(--muted);font-size:13px;cursor:pointer;transition:all .2s;text-align:center;}
+.pipe-tog.active-no{border-color:var(--navy-border);color:var(--muted);}
+.pipe-tog.active-yes-warm{border-color:var(--amber);background:rgba(255,167,38,.12);color:var(--amber);font-weight:600;}
+.pipe-tog.active-yes-hot{border-color:var(--red);background:rgba(239,83,80,.12);color:var(--red);font-weight:600;}
 .fup-act-btn:active{transform:scale(.92);}
 .fup-act-btn.wa{color:#25D366;border-color:rgba(37,211,102,.3);}
 .fup-act-btn.log{color:var(--gold);border-color:rgba(200,169,110,.3);}
@@ -295,7 +299,24 @@ html,body{height:100%;background:var(--navy);color:var(--text);font-family:'DM S
     </div>
 
     <div class="fsec">
-      <div class="fsec-title">Lead Management</div>
+      <div class="fsec-title">Pipeline</div>
+
+      <!-- PIPELINE STAGE TOGGLES -->
+      <div style="margin-bottom:14px">
+        <label style="font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px;display:block">Quotation Sent?</label>
+        <div style="display:flex;gap:8px">
+          <button id="p_quote_no" class="pipe-tog active-no" onclick="setPipeToggle('quote','no')">✗ No</button>
+          <button id="p_quote_yes" class="pipe-tog" onclick="setPipeToggle('quote','yes')">✓ Yes — move to Warm</button>
+        </div>
+      </div>
+      <div style="margin-bottom:16px">
+        <label style="font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px;display:block">Contract Sent?</label>
+        <div style="display:flex;gap:8px">
+          <button id="p_contract_no" class="pipe-tog active-no" onclick="setPipeToggle('contract','no')">✗ No</button>
+          <button id="p_contract_yes" class="pipe-tog" onclick="setPipeToggle('contract','yes')">✓ Yes — move to Hot 🔥</button>
+        </div>
+      </div>
+
       <div class="field-row">
         <div>
           <label class="elabel">Status <span>✎</span></label>
@@ -306,24 +327,20 @@ html,body{height:100%;background:var(--navy);color:var(--text);font-family:'DM S
             </div>
           </div>
         </div>
-        <div class="field">
-          <label>Priority</label>
-          <select id="f_pri"><option>High</option><option selected>Medium</option><option>Low</option></select>
-        </div>
-      </div>
-      <div class="field-row" style="margin-top:4px">
         <div>
           <label class="elabel">Source / Event <span>✎</span></label>
-          <div class="sel-row" style="margin-bottom:12px">
+          <div class="sel-row" style="margin-bottom:0">
             <div class="field" style="margin:0"><select id="f_source"></select></div>
             <div class="edit-ico" onclick="openMod('source')">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </div>
           </div>
         </div>
-        <div class="field"><label>Follow-up Date</label><input id="f_fup" type="date"></div>
       </div>
+      <div class="field" style="margin-top:10px"><label>Follow-up Date</label><input id="f_fup" type="date"></div>
       <div class="field"><label>Notes</label><textarea id="f_notes" placeholder="Key points from conversation…"></textarea></div>
+      <input type="hidden" id="f_quoteSent" value="no">
+      <input type="hidden" id="f_contractSent" value="no">
     </div>
 
     <button class="btn" onclick="saveLead()">Save Lead</button>
@@ -635,14 +652,39 @@ function renderLeads(){
 // ══════════════════════════════════════════════
 // FORM
 // ══════════════════════════════════════════════
+function setPipeToggle(type, val){
+  const noBtn=document.getElementById('p_'+type+'_no');
+  const yesBtn=document.getElementById('p_'+type+'_yes');
+  const hiddenField=document.getElementById('f_'+(type==='quote'?'quoteSent':'contractSent'));
+  if(!noBtn||!yesBtn)return;
+  noBtn.className='pipe-tog'+(val==='no'?' active-no':'');
+  if(type==='quote'){
+    yesBtn.className='pipe-tog'+(val==='yes'?' active-yes-warm':'');
+    if(val==='yes'){
+      const s=document.getElementById('f_status');
+      if(s&&(s.value==='New'||s.value==='Contacted'||!s.value))s.value='Warm';
+    }
+  } else {
+    yesBtn.className='pipe-tog'+(val==='yes'?' active-yes-hot':'');
+    if(val==='yes'){
+      const s=document.getElementById('f_status');
+      if(s)s.value='Hot';
+      // also mark quote as yes
+      setPipeToggle('quote','yes');
+    }
+  }
+  if(hiddenField)hiddenField.value=val;
+}
+
 function clearForm(){
   editMode=false; curId=null;
   ['f_name','f_co','f_phone','f_email','f_area','f_notes'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   document.getElementById('f_props').value='';
-  document.getElementById('f_pri').value='Medium';
   const tm=new Date(); tm.setDate(tm.getDate()+1);
   document.getElementById('f_fup').value=tm.toISOString().split('T')[0];
   fillAll();
+  // reset pipeline toggles
+  setTimeout(()=>{setPipeToggle('quote','no');setPipeToggle('contract','no');},50);
   document.getElementById('ftitle').textContent='New Lead';
   document.getElementById('fsub').textContent="Add a landlord you've just met";
 }
@@ -660,6 +702,15 @@ async function saveLead(){
   if(editMode&&prevFollowup&&newFollowup&&newFollowup!==prevFollowup){
     logEntry.note='Lead updated · Follow-up changed to '+fdate(newFollowup);
   }
+  const quoteSent=document.getElementById('f_quoteSent')?.value==='yes';
+  const contractSent=document.getElementById('f_contractSent')?.value==='yes';
+  // auto-status from pipeline toggles (contract overrides quote)
+  let autoStatus=document.getElementById('f_status').value;
+  if(contractSent) autoStatus='Hot';
+  else if(quoteSent) autoStatus='Warm';
+  // enrich log entry with pipeline actions
+  if(quoteSent&&!editMode) logEntry.note+=' · Quotation sent';
+  if(contractSent&&!editMode) logEntry.note+=' · Contract sent';
   const lead={
     id:editMode?curId:gid(), name, added:ex?.added||td(), updated:now,
     company:document.getElementById('f_co').value.trim(),
@@ -669,8 +720,10 @@ async function saveLead(){
     props:document.getElementById('f_props').value.trim(),
     type:document.getElementById('f_type').value,
     motivation:document.getElementById('f_motive').value,
-    status:document.getElementById('f_status').value,
-    priority:document.getElementById('f_pri').value,
+    status:autoStatus,
+    priority:'Medium',
+    quoteSent:quoteSent||(ex?.quoteSent||false),
+    contractSent:contractSent||(ex?.contractSent||false),
     source:document.getElementById('f_source').value,
     followup:newFollowup,
     notes:document.getElementById('f_notes').value.trim(),
@@ -729,6 +782,14 @@ function editLead(){
   document.getElementById('fab').classList.add('hide');
   curId=editId; // restore AFTER closeDetail wipes it
   go('add');
+  // restore pipeline toggle states after render
+  setTimeout(()=>{
+    setPipeToggle('quote', l.quoteSent?'yes':'no');
+    setPipeToggle('contract', l.contractSent?'yes':'no');
+    // restore the actual saved status (don't let toggle override on edit)
+    const s=document.getElementById('f_status');
+    if(s) s.value=l.status||'New';
+  },80);
 }
 function delLead(id){
   if(!confirm('Delete this lead? This cannot be undone.'))return;
@@ -744,7 +805,8 @@ function renderDet(l){
         ${l.company?`<div style="font-size:13px;color:var(--muted)">${l.company}</div>`:''}
         <div class="ibadges">
           <span class="badge s-${l.status}">${l.status}</span>
-          <span class="badge" style="background:rgba(200,169,110,.12);color:var(--gold)">${l.priority||'Medium'} Priority</span>
+          ${l.quoteSent?`<span class="badge" style="background:rgba(255,167,38,.15);color:var(--amber)">💰 Quotation Sent</span>`:''}
+          ${l.contractSent?`<span class="badge" style="background:rgba(239,83,80,.15);color:var(--red)">📄 Contract Sent</span>`:''}
         </div>
       </div>
     </div>
@@ -822,23 +884,23 @@ function openLog(){
       <div class="field"><label>Notes</label><textarea id="lf_n" placeholder="What was discussed…"></textarea></div>
 
       <div style="background:rgba(200,169,110,.06);border:1px solid rgba(200,169,110,.25);border-radius:12px;padding:14px;margin-bottom:10px">
-        <div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:10px;letter-spacing:.05em">PIPELINE ACTION</div>
-        <div class="field-row" style="margin-bottom:0">
-          <div class="field" style="margin-bottom:0">
-            <label>What did you send?</label>
-            <select id="lf_action">
-              <option value="">Nothing sent</option>
-              <option value="income">💰 Sent Potential Income</option>
-              <option value="contract">📄 Sent Contract</option>
-              <option value="followup">📞 General Follow-up</option>
-            </select>
-          </div>
-          <div class="field" style="margin-bottom:0">
-            <label>Outcome</label>
-            <select id="lf_o"><option>Positive</option><option>Neutral</option><option>No Response</option><option>Not Interested</option><option>Callback Requested</option></select>
+        <div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:12px;letter-spacing:.05em">PIPELINE UPDATE</div>
+        <div style="margin-bottom:12px">
+          <label style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px;display:block">Quotation Sent?</label>
+          <div style="display:flex;gap:8px">
+            <button id="lf_quote_no" class="pipe-tog active-no" onclick="setLogToggle('quote','no')">✗ No</button>
+            <button id="lf_quote_yes" class="pipe-tog" onclick="setLogToggle('quote','yes')">✓ Yes → Warm</button>
           </div>
         </div>
-        <div id="lf_action_hint" style="font-size:11px;color:var(--muted);margin-top:8px;display:none"></div>
+        <div>
+          <label style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px;display:block">Contract Sent?</label>
+          <div style="display:flex;gap:8px">
+            <button id="lf_contract_no" class="pipe-tog active-no" onclick="setLogToggle('contract','no')">✗ No</button>
+            <button id="lf_contract_yes" class="pipe-tog" onclick="setLogToggle('contract','yes')">✓ Yes → Hot 🔥</button>
+          </div>
+        </div>
+        <input type="hidden" id="lf_action" value="">
+        <div id="lf_action_hint" style="font-size:11px;margin-top:10px;display:none;padding:6px 8px;border-radius:6px;background:rgba(0,0,0,.2)"></div>
       </div>
 
       <div class="field" style="background:rgba(200,169,110,.06);border:1px solid rgba(200,169,110,.2);border-radius:10px;padding:10px 12px">
@@ -850,19 +912,30 @@ function openLog(){
       <button class="btn" onclick="saveLog()">✓ Save &amp; Reschedule</button>
       <button class="btn2" onclick="cancelLog()">Cancel</button>
     </div>`;
-  // Wire the action dropdown hint
-  setTimeout(()=>{
-    const sel=document.getElementById('lf_action');
-    const hint=document.getElementById('lf_action_hint');
-    if(sel&&hint){
-      sel.onchange=()=>{
-        if(sel.value==='income'){hint.style.display='block';hint.innerHTML='✅ Status will move to <strong style="color:#ffa726">Warm</strong> automatically';}
-        else if(sel.value==='contract'){hint.style.display='block';hint.innerHTML='🔥 Status will move to <strong style="color:#ef5350">Hot</strong> automatically';}
-        else{hint.style.display='none';}
-      };
-    }
-  },100);
+
   area.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function setLogToggle(type, val){
+  const noBtn=document.getElementById('lf_'+type+'_no');
+  const yesBtn=document.getElementById('lf_'+type+'_yes');
+  const hint=document.getElementById('lf_action_hint');
+  const action=document.getElementById('lf_action');
+  if(!noBtn||!yesBtn)return;
+  noBtn.className='pipe-tog'+(val==='no'?' active-no':'');
+  if(type==='quote'){
+    yesBtn.className='pipe-tog'+(val==='yes'?' active-yes-warm':'');
+    if(val==='yes'&&action&&!action.value.includes('contract'))action.value='income';
+    if(val==='no'&&action&&action.value==='income')action.value='';
+  } else {
+    yesBtn.className='pipe-tog'+(val==='yes'?' active-yes-hot':'');
+    if(val==='yes'){action.value='contract';setLogToggle('quote','yes');}
+    if(val==='no'&&action&&action.value==='contract')action.value='';
+  }
+  if(hint){
+    if(action.value==='contract'){hint.style.display='block';hint.style.color='var(--red)';hint.innerHTML='🔥 Status will move to <strong>Hot</strong>';}
+    else if(action.value==='income'){hint.style.display='block';hint.style.color='var(--amber)';hint.innerHTML='✅ Status will move to <strong>Warm</strong>';}
+    else{hint.style.display='none';}
+  }
 }
 function cancelLog(){document.getElementById('logarea').innerHTML='';logOpen=false;}
 async function saveLog(){
@@ -870,7 +943,7 @@ async function saveLog(){
   const nextDate=document.getElementById('lf_nd').value;
   if(!nextDate){toast('Please set a Next Follow-up Date','err');return;}
   const l={...leads[idx]};
-  const action=document.getElementById('lf_action')?.value||'';
+  const action=document.getElementById('lf_action')?.value||''; // 'income', 'contract', or ''
   const prevFollowup=l.followup||'';
   // Auto-status from pipeline action
   let autoStatus='';
@@ -1104,6 +1177,13 @@ function toast(msg,type=''){
 if(!cfg.scriptUrl) cfg.scriptUrl='https://script.google.com/macros/s/AKfycbxVx3nLD7Rfr4d9w2hqkbLs_p6SKqaEPgla6mmf93k4uhJIdbNZ41Heh8UIOTY-B6PFwA/exec';
 scfg();
 
+// Migrate old leads: if priority was Hot/Warm and status is New/Contacted, update status
+leads=leads.map(l=>{
+  if((l.priority==='Hot'||l.priority==='High')&&(l.status==='New'||l.status==='Contacted'))
+    return{...l,status:'Hot'};
+  return l;
+});
+sl();
 fillAll(); renderDash(); renderLeads(); updateTog();
 if(cfg.auto&&cfg.scriptUrl)setTimeout(()=>syncToSheets(true),1200);
 </script>
