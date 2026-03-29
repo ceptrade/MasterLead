@@ -84,13 +84,13 @@ html,body{height:100%;background:var(--navy);color:var(--text);font-family:'DM S
 .banner-text{flex:1;font-size:12px;color:var(--gold);line-height:1.4;}
 
 /* ── LEADS LIST ── */
-.searchbar{padding:12px 20px;}
+.searchbar{padding:12px 20px;position:sticky;top:0;z-index:10;background:var(--navy);}
 .search-wrap{position:relative;}
 .search-wrap svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);width:16px;height:16px;}
 .search-inp{width:100%;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:10px;padding:10px 12px 10px 36px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;}
 .search-inp:focus{border-color:var(--gold);}
 .search-inp::placeholder{color:var(--muted);}
-.chips{display:flex;gap:8px;padding:0 20px 12px;overflow-x:auto;}
+.chips{display:flex;gap:8px;padding:0 20px 12px;overflow-x:auto;position:sticky;top:52px;z-index:10;background:var(--navy);}
 .chips::-webkit-scrollbar{display:none;}
 .chip{flex-shrink:0;padding:6px 14px;border-radius:20px;border:1px solid var(--navy-border);background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;}
 .chip.on{background:var(--gold);border-color:var(--gold);color:var(--navy);font-weight:600;}
@@ -540,13 +540,13 @@ function fillAll(){
 // NAVIGATION
 // ══════════════════════════════════════════════
 function go(tab){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.screen').forEach(s=>{s.classList.remove('on');s.scrollTop=0;});
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
   document.getElementById('sc-'+tab).classList.add('on');
   document.getElementById('t-'+tab).classList.add('on');
   document.getElementById('fab').classList.add('hide');
   if(tab==='dash') renderDash();
-  if(tab==='leads') renderLeads();
+  if(tab==='leads'){renderLeads(); setTimeout(()=>{const s=document.getElementById('sc-leads');if(s)s.scrollTop=0;},50);}
   if(tab==='settings') loadSettings();
   if(tab==='add'&&!editMode) clearForm();
 }
@@ -585,8 +585,15 @@ function renderDash(){
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--green);flex-shrink:0"><path d="M9 18l6-6-6-6"/></svg>
   </div>`;
 
-  const items=leads.filter(l=>l.followup&&due(l.followup)<=14)
-    .sort((a,b)=>(due(a.followup)||999)-(due(b.followup)||999));
+  const items=leads.filter(l=>{
+    if(!l.followup) return false;
+    const d=due(l.followup);
+    return d!==null && d<=14; // all overdue + next 14 days
+  }).sort((a,b)=>{
+    const da=due(a.followup)??999;
+    const db=due(b.followup)??999;
+    return da-db;
+  });
   document.getElementById('fuplist').innerHTML=items.length?items.map(l=>`
     <div class="fup-card">
       <div class="fup-av" onclick="openDetail('${l.id}')">${l.name[0].toUpperCase()}</div>
@@ -771,7 +778,7 @@ function editLead(){
   document.getElementById('f_type').value=l.type||'';
   document.getElementById('f_motive').value=l.motivation||'';
   document.getElementById('f_status').value=l.status||'New';
-  document.getElementById('f_pri').value=l.priority||'Medium';
+  // priority field removed — pipeline handles status now
   document.getElementById('f_source').value=l.source||'';
   document.getElementById('f_fup').value=l.followup||'';
   document.getElementById('f_notes').value=l.notes||'';
