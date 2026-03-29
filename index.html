@@ -1085,13 +1085,18 @@ async function syncToSheets(silent=false){
         if(!ids.has(l.id)){leads.push(l);ids.add(l.id);added++;}
         else{
           const idx=leads.findIndex(x=>x.id===l.id);
-          if(idx>=0&&l.updated&&(!leads[idx].updated||l.updated>leads[idx].updated))leads[idx]=l;
+          if(idx>=0){
+            // always pick up calendarEventId from server
+            if(l.calendarEventId) leads[idx].calendarEventId=l.calendarEventId;
+            if(l.updated&&(!leads[idx].updated||l.updated>leads[idx].updated))leads[idx]=l;
+          }
         }
       });
       if(added>0){sl();renderDash();renderLeads();}
+      else sl(); // save updated calendarEventIds
     }
     setSyncUI('ok','Synced ✓');
-    if(!silent)toast('Synced with Google Sheets ✓');
+    if(!silent)toast('Synced & Calendar updated ✓');
     setTimeout(()=>setSyncUI('','Sync'),3000);
     return true;
   }catch(e){
